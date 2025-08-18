@@ -31,8 +31,38 @@ struct Order
     Order* next_in_q = nullptr; //only singly since we push_back and pop_front
 };
 
-
+const int PL_POOL_CAP = 10000;
 const int POOL_CAP = 10000;
+
+struct PriceLevelPool {
+    PriceLevel pool[PL_POOL_CAP];
+    PriceLevel* free_head =  nullptr;
+
+    PriceLevelPool(){
+        for (int i=0; i< PL_POOL_CAP-1; ++i){
+            pool[i].next =  &pool[i+1];
+        }
+        pool[PL_POOL_CAP - 1 ].next = nullptr;
+        free_head = &pool[0];  //reset to back / bottom of list to be able to bump up
+    }
+
+    //we take the next available object to use from our 'pool'
+    PriceLevel* allocate(){ 
+        if (!free_head) return nullptr;
+        PriceLevel* allocated_lvl = free_head;
+        free_head = free_head->next;
+
+        allocated_lvl -> prev = nullptr;
+        allocated_lvl -> next = nullptr;
+        return allocated_lvl;
+    }
+
+    //called on fully executed / cancelled ; we insert at beginning again (cache friendly)
+    void deallocate(PriceLevel* level){
+        level->next = free_head;
+        free_head = level;
+    }
+};
 
 struct OrderPool{
     Order pool[POOL_CAP];
@@ -58,9 +88,9 @@ struct OrderPool{
         order->next_in_q = free_head;
         free_head = order;
     }
-
-
 };
+
+
 
 struct OrderQueue{ //fifo singly LL
     Order* head = nullptr;
@@ -160,6 +190,12 @@ struct OrderBook
 };
 
 
+void process_order(){
+
+}
+
+
+
 void create_order(const auto& tokens){
     if (!tokens.size() != 7) return;
 
@@ -174,7 +210,7 @@ void create_order(const auto& tokens){
     }
     else  cur_book_id = it->second;
 
-    Order* order = order_pool.allocate();
+    Order* order = orderpool.allocate();
     order->id = next_id++;
     order->client_id = parse_int(tokens[1]);
     order->book_id = cur_book_id;
