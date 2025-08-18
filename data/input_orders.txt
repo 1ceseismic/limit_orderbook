@@ -2,6 +2,6 @@ O, Client 1, Orderbook 1, Token 1, B, 100, 50
 O, Client 2, Orderbook 1, Token 2, S, 50, 45
 O, Client 3, Orderbook 1, Token 3, S, 100, 55
 O, Client 2, Orderbook 1, Token 4, S, 100, 55
-C, Client 1, Token 1
+X, Client 1, Token 1
 O, Client 1, Orderbook 1, Token 5, B, 5, 60
 O, Client 1, Orderbook 1, Token 6, B, 100, 60
