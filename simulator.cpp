@@ -66,7 +66,7 @@ struct OrderQueue{ //fifo singly LL
     Order* head = nullptr;
     Order* tail = nullptr;
 
-    bool empty() {return head == nullptr; }
+    bool empty() {return head == nullptr;}
 
     void push_back(Order* order){
         order->next_in_q = nullptr;
@@ -104,13 +104,58 @@ struct OrderBook
     PriceLevel* asks_head = nullptr;
 
     PriceLevel* create_insert_pl(int price, PriceLevel* prev_level, PriceLevel* next_level){
-        
+        PriceLevel* new_level = pricelevel_pool.allocate();
+        new_level->price = price;
+        new_level->prev = prev_level;
+        new_level->next = next_level;
+
+        if (prev_level) {
+            prev_level->next = new_level;
+        }
+        if (next_level){
+            next_level->prev = new_level;
+        }
+        return new_level;
     }
 
     PriceLevel* get_create_pricelvl(int price, bool is_buy){
         PriceLevel* curr = is_buy ? bids_head : asks_head;
         PriceLevel* prev = nullptr;
+        
+
+        while (curr){
+            if (curr->price == price) return curr;
+        
+            //bids sorted high to low
+            if (is_buy &&  curr->price < price){
+                PriceLevel* new_level = create_insert_pl(price, prev, curr);
+                if (!prev){
+                    bids_head = new_level;  //new head
+                }
+                return new_level;
+            }
+
+            //asks sorted low to high
+            if (!is_buy && curr->price > price){
+                PriceLevel* new_level = create_insert_pl(price, prev, curr);
+                if (!prev){
+                    asks_head = new_level;
+                }
+
+                return new_level;
+            }
+
+            prev = curr;
+            curr = curr -> next;
+        }   
     
+        //here must mean the list is empty or we need to add to end
+        PriceLevel* new_level = create_insert_pl(price, prev, nullptr);
+        if (!prev){
+            if (is_buy) bids_head = new_level;
+            else asks_head = new_level;
+        }
+        return new_level;
     }
 };
 
@@ -142,11 +187,25 @@ void create_order(const auto& tokens){
 }
 
 void cleanup_order(Order* order){
+    token_to_order.erase(order->token);
 
+    orderpool.deallocate(order);
 
 }
 bool cancel_order(const auto& token){
+    auto it = token_to_order.find(token);
+    if (it == token_to_order.end()) return false;
 
+    Order* order_to_cancel = it->second;
+
+    if (order_to_cancel -> quantity = 0){
+        cleanup_order(order_to_cancel);
+        return true;
+    }
+    order_to_cancel->quantity = 0;
+    cleanup_order(order_to_cancel);
+
+    printf("C, Client %d, Token %lu\n", order_to_cancel->client_id, order_to_cancel->token);
 } 
 
 
