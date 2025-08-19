@@ -6,6 +6,7 @@
 #include <chrono>
 
 struct PriceLevel;
+
 struct Order {
     PriceLevel* price_lvl; //for O(1) erasures
     int client_id;
@@ -16,6 +17,7 @@ struct Order {
     Order* next = nullptr;
 };
 
+//an intrusive linked list alternative to let us remove from many index in queue
 struct OrderQueue {
     Order* head = nullptr;
     Order* tail = nullptr;
@@ -128,7 +130,7 @@ int parse_int(const std::string_view& sv) {
 void cleanup_order(Order* order){ 
     g_token_to_order.erase(order->token);
     
-    if (order->price_lvl){
+    if (order->price_lvl){ //this should always be true anyway
         order->price_lvl->orders.remove_order(order);
     }
     delete order;
@@ -192,7 +194,7 @@ void process_order(Order* incoming_o) {
         newlvl->orders.push_back(incoming_o);
     } else {
         g_token_to_order.erase(incoming_o->token);
-        delete incoming_o;
+        delete incoming_o; //no need to use cleanup func as we never placed o on main map
     }
 }
 
