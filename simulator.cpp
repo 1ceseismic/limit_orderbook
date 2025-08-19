@@ -5,7 +5,9 @@
 #include <unordered_map>
 #include <chrono>
 
+struct PriceLevel;
 struct Order {
+    PriceLevel* price_lvl; //for O(1) erasures
     int client_id;
     uint32_t token;
     bool is_buy;
@@ -101,7 +103,7 @@ struct OrderBook
     }
 };
 
-OrderBook g_order_book;
+OrderBook g_order_book; //single book implementation as i realized instructs said only 1
 std::unordered_map<uint32_t, Order*> g_token_to_order;
 
 std::string_view trim(std::string_view sv) {
@@ -126,11 +128,9 @@ int parse_int(const std::string_view& sv) {
 void cleanup_order(Order* order){ 
     g_token_to_order.erase(order->token);
     
-    PriceLevel* head = order->is_buy ? g_order_book.bids_head : g_order_book.asks_head;
-    PriceLevel* pl = head;
-    while(pl && pl->price != order->price) pl = pl->next;
-
-    if(pl) pl->orders.remove_order(order);
+    if (order->price_lvl){
+        order->price_lvl->orders.remove_order(order);
+    }
     delete order;
 }
 
@@ -141,7 +141,6 @@ anything leftover of incoming is placed onto book, and any used-up resting order
   got rid of our memory pooling so deleting manually agaub - but its slightly cleaner
 
 */
-
 void process_order(Order* incoming_o) {
     PriceLevel* cur_level = incoming_o->is_buy ? g_order_book.asks_head : g_order_book.bids_head;
     std::vector<std::pair<int, uint32_t>> executions;
@@ -189,7 +188,8 @@ void process_order(Order* incoming_o) {
     }
     
     if (incoming_o->quantity > 0) { 
-        g_order_book.get_create_pricelvl(incoming_o->price, incoming_o->is_buy)->orders.push_back(incoming_o);
+        PriceLevel* newlvl = g_order_book.get_create_pricelvl(incoming_o->price, incoming_o->is_buy);
+        newlvl->orders.push_back(incoming_o);
     } else {
         g_token_to_order.erase(incoming_o->token);
         delete incoming_o;
@@ -220,7 +220,6 @@ void cancel_order(const std::vector<std::string_view>& tokens) {
     cleanup_order(order_to_cancel);
 }
 
-
 int main() {
 
     std::ifstream infile("input_orders.txt");
@@ -228,7 +227,6 @@ int main() {
         std::cerr << "cant open file\n";
         return 1;
     }
-    //auto start = std::chrono::high_resolution_clock::now();
 
     std::string line;
     while (getline(infile, line)) {
@@ -246,8 +244,6 @@ int main() {
         if (trim(tokens[0]) == "O") create_order(tokens);
         else if (trim(tokens[0])== "X") cancel_order(tokens);
     }
-    //auto end = std::chrono::high_resolution_clock::now(); 
-    //auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     std::cout << "\n";
     for (PriceLevel* pl = g_order_book.bids_head; pl != nullptr; pl = pl->next) {
@@ -260,8 +256,6 @@ int main() {
             printf("O, Client %d, Orderbook 1, Token %u, S, %u, %u\n", o->client_id, o->token, o->quantity, o->price);
         }
     }
-
-    //std::cout << "\n time: " << dur.count() << " ms\n";
 
     return 0;
 }
