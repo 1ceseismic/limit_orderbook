@@ -1,2 +1,4 @@
 /.vscode
 .editorconfig
+/.vs
+CppProperties.json
