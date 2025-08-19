@@ -15,38 +15,39 @@ struct Order
     uint32_t price;
 };
 
+using optr = std::unique_ptr<Order>;
 
-std::unordered_map<uint64_t, Order*> id_index;
+std::unordered_map<uint64_t, optr> id_index;
 uint64_t next_id = 1;
-std::deque<Order> orders;
 
 static std::unordered_map<std::string, OrderBook> all_books;  
 static std::unordered_map<uint64_t, Order*> token_to_order;  //unclear whether we need multiple orderbook support  due to mmissing ids in  cancellaion input
 
 
-bool cancel(uint64_t token_id){ 
-    auto token_it = token_to_order.find(token_id);
-    if (token_it == token_to_order.end()) return false;
-
-    Order* o = token_it->second;
-    if (o->quantity ==0) return false;
-    o->quantity = 0;  // inactive now i.e we can skip during checks instead of reallocating
-
-    return true;
-}
-
-
 struct OrderBook
-{
-    std::map<int, std::deque<Order*>, std::greater<int>> bids;
-    std::map<int, std::deque<Order*>, std::less<int>> asks;
+{   
+    //price -> price level
+    std::map<int, std::deque<optr>, std::greater<int>> bids;
+    std::map<int, std::deque<optr>, std::less<int>> asks;
     
+    bool cancel_order(uint64_t token_id){ 
+        auto token_it = token_to_order.find(token_id);
+        if (token_it == token_to_order.end()) return false;
+    
+        Order* o = std::move(token_it->second);
+        if (o->quantity ==0) return false;
+        o->quantity = 0;  // inactive now i.e we can skip during checks instead of reallocating
+    
+        return true;
+    }
 
-    void add_order(Order order) {
 
-        orders.push_back(order);
-        Order* o = &orders.back();
-        id_index[o->id] = o;
+    void add_order(optr order) {
+        if (!order) return;
+        auto [it, inserted] = id_index.try_emplace(order->id, std::move(order));
+        if (!inserted) return;
+
+        Order* o = it->second.get();
         token_to_order[o->token] = o;
     
         if (o->is_buy) {
@@ -62,11 +63,9 @@ struct OrderBook
                 int initial_quantity = o->quantity;
                 
                 while (!q.empty() && o->quantity > 0) {
-                    Order* m = q.front();
+                    Order* m = q.front().get();
                     if (m->quantity <= 0) {
                         q.pop_front();
-                        id_index.erase(m->id);
-                        token_to_order.erase(m->token);
                         continue;
                     }
                     
@@ -79,10 +78,9 @@ struct OrderBook
     
                     if (m->quantity == 0) {
                         q.pop_front();
-                        id_index.erase(m->id);
-                        token_to_order.erase(m->token);
                     }
                 }
+
                 if (initial_quantity > o->quantity) {
                     int total_traded = initial_quantity - o->quantity;
                     printf("E, Client %d, Token %ld, %d, %d\n", o->client_id, o->token, total_traded, best_price);
@@ -90,9 +88,9 @@ struct OrderBook
             }
             
             if (o->quantity > 0) {
-                bids[o->price].push_back(o);
+                bids[o->price].push_back(std::move(it->second));
             } else {
-                id_index.erase(o->id);
+                id_index.erase(it);
                 token_to_order.erase(o->token);
             }
             
@@ -109,11 +107,9 @@ struct OrderBook
                 int initial_quantity = o->quantity;
     
                 while (!q.empty() && o->quantity > 0) {
-                    Order* m = q.front();
+                    Order* m = q.front().get();
                     if (m->quantity <= 0) {
                         q.pop_front();
-                        id_index.erase(m->id);
-                        token_to_order.erase(m->token);
                         continue;
                     }
                     int traded = std::min(o->quantity, m->quantity);
@@ -125,8 +121,6 @@ struct OrderBook
                     
                     if (m->quantity == 0) {
                         q.pop_front();
-                        id_index.erase(m->id);
-                        token_to_order.erase(m->token);
                     }
                 }
                 //after all trades at this price ; print incoming order
@@ -138,9 +132,9 @@ struct OrderBook
     
             //leftover for book
             if (o->quantity > 0) {
-                asks[o->price].push_back(o);
+                asks[o->price].push_back(std::move(it->second));
             } else { //fully executed so we can rm
-                id_index.erase(o->id);
+                id_index.erase(it);
                 token_to_order.erase(o->token);
             }
         }
@@ -196,9 +190,9 @@ void parseOB(std::istream& input, OrderBook& ob){
             token_to_order[order.token] = &order;
 
             if (order.is_buy) {
-                ob.add_order(order); 
+                ob.add_order(std::make_unique<Order>(order)); 
             } else { 
-                ob.add_order(order); 
+                ob.add_order(std::make_unique<Order>(order)); 
             }
 
         } else if ((tokens[0] == "X" || tokens[0] == "C") && tokens.size() ==3){
@@ -207,9 +201,9 @@ void parseOB(std::istream& input, OrderBook& ob){
             auto it = token_to_order.find(tok_cancel);
             
             if (it != token_to_order.end()){
-                Order* cancel_order = it->second;
+                Order* c = it->second;
                 
-                if (cancel(cancel_order->id)){
+                if (ob.cancel_order(c->id)){
                     cout <<"C, " <<tokens[1]<<", "<<tokens[2]<<"\n";
                 }      
             }
@@ -231,9 +225,9 @@ int main(){
     std::cout <<"\n";
     
     for (auto& [bname, _ob] :  all_books){
-        for (const auto& pricelevel : _ob.bids){
+        for (auto& pricelevel : _ob.bids){
 
-            for (Order* o : pricelevel.second){
+            for (optr& o : pricelevel.second){
                 if (o->quantity > 0) {//not fully executed
                     char type = o->is_buy ? 'B' : 'S';
                     printf("O, Client %d, %s, Token %ld, %c, %ld, %ld \n", o->client_id, o->book_id, o->token, type, o->quantity, o->price);
@@ -241,8 +235,8 @@ int main(){
             }
         }
 
-        for (const auto& pricelevel : _ob.asks){
-            for (Order* o : pricelevel.second){
+        for (auto& pricelevel : _ob.asks){
+            for (optr& o : pricelevel.second){
                 if (o->quantity > 0) {//not fully executed
                     char type = o->is_buy ? 'B' : 'S';
                     printf("O, Client %d, Orderbook %d, Token %ld, %c, %ld, %ld \n", o->client_id, o->book_id, o->token, type, o->quantity, o->price);
