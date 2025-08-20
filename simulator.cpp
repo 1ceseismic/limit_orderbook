@@ -3,10 +3,28 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <chrono>
+
+
+int parse_int(const std::string_view& sv) {
+    int val = 0;
+    bool found_digit = false;
+    for (char c : sv) {
+        if (c >= '0' && c <= '9') {
+            val = val * 10 + (c- '0');
+            found_digit = true;
+        } else if (found_digit) break;
+    }
+    return val;
+}
+
+std::string_view trim(std::string_view sv) {
+    sv.remove_prefix(std::min(sv.find_first_not_of(" \t\n\r"), sv.size()));
+    sv.remove_suffix(std::min(sv.size() - sv.find_last_not_of(" \t\n\r") - 1, sv.size()));
+    return sv;
+}
+
 
 struct PriceLevel;
-
 /*
 doubly-linked order object  can access its prcie level immediately;  we store
 both next and prev pointers to allow 'linking' the removed orders neighbours immediately in queues remove_order
@@ -17,7 +35,7 @@ struct Order {
     uint32_t token;
     bool is_buy;
     uint32_t quantity;
-    uint32_t price;
+    int price;
     Order* next = nullptr; 
     Order*  prev = nullptr;
 };
@@ -77,9 +95,8 @@ struct OrderBook
     PriceLevel* bids_head = nullptr;
     PriceLevel* asks_head = nullptr;
 
-    std::unordered_map<int, PriceLevel*> bids_pindex;
+    std::unordered_map<int, PriceLevel*> bids_pindex; //these only exist for the quick lookup of existing levels we can insert into
     std::unordered_map<int, PriceLevel*> asks_pindex;
-
 
     PriceLevel* get_create_pricelvl(int price, bool is_buy){
 
@@ -95,8 +112,6 @@ struct OrderBook
         PriceLevel* prev = nullptr;
         
         while (curr) {
-            if (curr->price == price) return curr; 
-            
             //insert new level befor i.e higher priority to front respectively - this is our main slowdown O(P)
             bool insert_before = (is_buy && curr->price < price) || (!is_buy && curr->price > price);
             if (insert_before) {
@@ -132,6 +147,16 @@ void cleanup_order(Order* order){
     delete order;
 }
 
+void cancel_order(const std::string_view& tokenstr) {
+    uint32_t token = static_cast<uint32_t>(parse_int(tokenstr));
+    auto it = g_token_to_order.find(token);
+    if (it == g_token_to_order.end()) return;
+
+    Order* order_to_cancel = it->second;
+    printf("C, Client %d, Token %u\n", order_to_cancel->client_id, order_to_cancel->token);
+    cleanup_order(order_to_cancel);
+}
+
 /*
 matching and executing logic ; we traverse all price levels (the ladder);
 for each pricelevel we go through the sorted queue of orders, trying to fulfill the incoming order
@@ -153,10 +178,18 @@ void process_order(Order* incoming_o) {
 
         uint32_t qty_traded_onlevel = 0;
         OrderQueue& q = cur_level->orders;
-
+        
 
         while (!q.empty() && incoming_o->quantity > 0) {
             Order* resting_ord= q.head;
+
+            //prevent self trades
+            if (resting_ord->client_id == incoming_o->client_id) {
+                g_token_to_order.erase(incoming_o->token);
+                delete incoming_o;
+                return;
+            }
+
             uint32_t traded_qty = std::min(incoming_o->quantity, resting_ord->quantity);
 
             printf("E, Client %d, Token %u, %u, %d\n", resting_ord->client_id, resting_ord->token, traded_qty, cur_level->price);
@@ -208,50 +241,18 @@ void process_order(Order* incoming_o) {
 }
 
 
-std::string_view trim(std::string_view sv) {
-    sv.remove_prefix(std::min(sv.find_first_not_of(" \t\n\r"), sv.size()));
-    sv.remove_suffix(std::min(sv.size() - sv.find_last_not_of(" \t\n\r") - 1, sv.size()));
-    return sv;
-}
-
-
-int parse_int(const std::string_view& sv) {
-    int val = 0;
-    bool found_digit = false;
-    for (char c : sv) {
-        if (c >= '0' && c <= '9') {
-            val = val * 10 + (c- '0');
-            found_digit = true;
-        } else if (found_digit) break;
-    }
-    return val;
-}
-
-
-//clean called when we erase orders
 void create_order(const std::vector<std::string_view>& tokens) {
     Order* order = new Order{
         .client_id =  parse_int(tokens[1]),
         .token = static_cast<uint32_t>(parse_int(tokens[3])),
         .is_buy = (trim(tokens[4]) == "B"),
         .quantity = static_cast<uint32_t>(parse_int(tokens[5])),
-        .price =  static_cast<uint32_t>(parse_int(tokens[6]))
+        .price =  parse_int(tokens[6])
     };
     
     printf("A, Client %d, Token %u\n", order->client_id, order->token);
     g_token_to_order[order->token] = order;
     process_order(order);
-}
-
-
-void cancel_order(const std::string_view& tokenstr) {
-    uint32_t token = static_cast<uint32_t>(parse_int(tokenstr));
-    auto it = g_token_to_order.find(token);
-    if (it == g_token_to_order.end()) return;
-
-    Order* order_to_cancel = it->second;
-    printf("C, Client %d, Token %u\n", order_to_cancel->client_id, order_to_cancel->token);
-    cleanup_order(order_to_cancel);
 }
 
 
