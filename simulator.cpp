@@ -15,6 +15,7 @@ struct Order {
     uint32_t quantity;
     uint32_t price;
     Order* next = nullptr;
+    Order*  prev = nullptr;
 };
 
 //an intrusive linked list alternative to let us remove from many index in queue
@@ -26,6 +27,7 @@ struct OrderQueue {
 
     void push_back(Order* order) {
         order->next = nullptr;
+        order->prev = tail;
         if (empty()) {
             head = order;
             tail = order;
@@ -37,25 +39,21 @@ struct OrderQueue {
 
     Order* pop_front(){
         if (empty()) return nullptr;
+
         Order* po = head;
         head = head->next;
-        if (head == nullptr) tail = nullptr;
+        if (head == nullptr) head->prev = nullptr;
+        else tail = nullptr;
+        
         return po;
     }
 
-    void remove_order(Order* order_to_remove) { //O(K)  for K orders in queue
-        if (head == order_to_remove) {
-            pop_front();
-            return;
-        }
-        Order* current = head;
-        while (current && current->next != order_to_remove) {
-            current = current->next;
-        }
-        if (current && current->next) {
-            current->next = order_to_remove->next;
-            if (order_to_remove == tail) tail = current;
-        }
+    void remove_order(Order* o) { //O(1)  for K orders in queue as we have prev pointer
+        if (o->prev) o->prev->next = o->next;
+        else head = o->next;
+
+        if (o->next) o->next->prev = o->prev;
+        else tail = o->prev;
     }
 };
 
@@ -84,7 +82,7 @@ struct OrderBook
         while (curr) {
             if (curr->price == price) return curr; 
             
-            //insert new level befor i.e higher priority to front respectively
+            //insert new level befor i.e higher priority to front respectively - this is our main slowdown O(P)
             bool insert_before = (is_buy && curr->price < price) || (!is_buy && curr->price > price);
             if (insert_before) {
                 PriceLevel* new_level = new PriceLevel{price, {}, prev, curr};
@@ -211,6 +209,8 @@ void create_order(const std::vector<std::string_view>& tokens) {
     g_token_to_order[order->token] = order;
     process_order(order);
 }
+
+
 
 void cancel_order(const std::vector<std::string_view>& tokens) {
     uint32_t token = static_cast<uint32_t>(parse_int(tokens[2]));
