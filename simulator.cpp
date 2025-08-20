@@ -7,18 +7,22 @@
 
 struct PriceLevel;
 
+/*
+doubly-linked order object  can access its prcie level immediately;  we store
+both next and prev pointers to allow 'linking' the removed orders neighbours immediately in queues remove_order
+*/
 struct Order {
-    PriceLevel* price_lvl; //for O(1) erasures
+    PriceLevel* price_lvl; //for O(1) erasures from its level
     int client_id;
     uint32_t token;
     bool is_buy;
     uint32_t quantity;
     uint32_t price;
-    Order* next = nullptr;
+    Order* next = nullptr; 
     Order*  prev = nullptr;
 };
 
-//an intrusive linked list alternative to let us remove from many index in queue
+//an intrusive linked list alternative to let us remove from any index in queue
 struct OrderQueue {
     Order* head = nullptr;
     Order* tail = nullptr;
@@ -73,9 +77,20 @@ struct OrderBook
     PriceLevel* bids_head = nullptr;
     PriceLevel* asks_head = nullptr;
 
+    std::unordered_map<int, PriceLevel*> bids_pindex;
+    std::unordered_map<int, PriceLevel*> asks_pindex;
+
+
     PriceLevel* get_create_pricelvl(int price, bool is_buy){
 
         PriceLevel*& head = is_buy ? bids_head : asks_head;
+        auto& p_index = is_buy ? bids_pindex : asks_pindex;
+        
+        // micro optimisation to find an existing levels in O(1) instead of our normal O(P) fallback
+        auto it = p_index.find(price);
+        if (it !=p_index.end()) return it->second;   
+
+
         PriceLevel* curr = head;
         PriceLevel* prev = nullptr;
         
@@ -99,32 +114,15 @@ struct OrderBook
         
         PriceLevel* new_level = new PriceLevel{price, {}, prev, nullptr};
         if (prev) prev->next = new_level; else head = new_level;
+
+        p_index[price] = new_level;  //we cache the existing level now
         return new_level;
     }
 };
 
-OrderBook g_order_book; //single book implementation as i realized instructs said only 1
+OrderBook g_order_book; //single book implementation as i realized instructs said 1 for simplification
 std::unordered_map<uint32_t, Order*> g_token_to_order;
 
-std::string_view trim(std::string_view sv) {
-    sv.remove_prefix(std::min(sv.find_first_not_of(" \t\n\r"), sv.size()));
-    sv.remove_suffix(std::min(sv.size() - sv.find_last_not_of(" \t\n\r") - 1, sv.size()));
-    return sv;
-}
-
-int parse_int(const std::string_view& sv) {
-    int val = 0;
-    bool found_digit = false;
-    for (char c : sv) {
-        if (c >= '0' && c <= '9') {
-            val = val * 10 + (c- '0');
-            found_digit = true;
-        } else if (found_digit) break;
-    }
-    return val;
-}
-
-//clean called when we erase orders
 void cleanup_order(Order* order){ 
     g_token_to_order.erase(order->token);
     
@@ -143,24 +141,27 @@ anything leftover of incoming is placed onto book, and any used-up resting order
 */
 void process_order(Order* incoming_o) {
     PriceLevel* cur_level = incoming_o->is_buy ? g_order_book.asks_head : g_order_book.bids_head;
-    std::vector<std::pair<int, uint32_t>> executions;
+
+    size_t total_exec_qty =0;
+    int last_tp = 0;
 
     while (incoming_o->quantity > 0 && cur_level) {
         bool price_match = (incoming_o->is_buy && incoming_o->price >= cur_level->price) || 
                            (!incoming_o->is_buy && incoming_o->price <= cur_level->price);
         if (!price_match) break;
         
+
+        uint32_t qty_traded_onlevel = 0;
         OrderQueue& q = cur_level->orders;
+
+
         while (!q.empty() && incoming_o->quantity > 0) {
             Order* resting_ord= q.head;
             uint32_t traded_qty = std::min(incoming_o->quantity, resting_ord->quantity);
 
             printf("E, Client %d, Token %u, %u, %d\n", resting_ord->client_id, resting_ord->token, traded_qty, cur_level->price);
             
-            bool found_ex = false;
-            for(auto& ex : executions) if(ex.first == cur_level->price) { ex.second += traded_qty; found_ex = true; break; }
-            if(!found_ex) executions.push_back({cur_level->price, traded_qty});
-
+            qty_traded_onlevel +=traded_qty;
             incoming_o->quantity -= traded_qty;
             resting_ord->quantity -= traded_qty;
 
@@ -170,32 +171,64 @@ void process_order(Order* incoming_o) {
             }
         }
         
+        if (qty_traded_onlevel > 0){
+            total_exec_qty += qty_traded_onlevel;
+            last_tp = cur_level->price;
+        }
+
         PriceLevel* next_level = cur_level->next;
-        if (q.empty()) {
-            if (cur_level->prev) cur_level->prev->next = cur_level->next; //link before to after us
+        if (q.empty()) { // current price level exhausted,so we clean it up from global ladder of available prices
+
+            auto& p_index = incoming_o->is_buy ? g_order_book.asks_pindex : g_order_book.bids_pindex;
+            p_index.erase(cur_level->price);
+
+            if (cur_level->prev) cur_level->prev->next = cur_level->next; //link before to after us and vise versa
             else {
-                if(incoming_o->is_buy) g_order_book.asks_head = cur_level->next;
+                if (incoming_o->is_buy) g_order_book.asks_head = cur_level->next;
                 else g_order_book.bids_head = cur_level->next;
             }
             if (cur_level->next) cur_level->next->prev = cur_level->prev;
             delete cur_level;
         }
-        cur_level = next_level;
+        cur_level = next_level; //go next level to try continue fulfilling order
     }
 
-    for (const auto& ex : executions) {
-        printf("E, Client %d, Token %u, %u, %d\n", incoming_o->client_id, incoming_o->token, ex.second, ex.first);
+    if (total_exec_qty > 0) {
+        printf("E, Client %d, Token %u, %u, %d\n", incoming_o->client_id, incoming_o->token, total_exec_qty, last_tp);
     }
     
     if (incoming_o->quantity > 0) { 
         PriceLevel* newlvl = g_order_book.get_create_pricelvl(incoming_o->price, incoming_o->is_buy);
         newlvl->orders.push_back(incoming_o);
+        incoming_o->price_lvl = newlvl;
     } else {
         g_token_to_order.erase(incoming_o->token);
         delete incoming_o; //no need to use cleanup func as we never placed o on main map
     }
 }
 
+
+std::string_view trim(std::string_view sv) {
+    sv.remove_prefix(std::min(sv.find_first_not_of(" \t\n\r"), sv.size()));
+    sv.remove_suffix(std::min(sv.size() - sv.find_last_not_of(" \t\n\r") - 1, sv.size()));
+    return sv;
+}
+
+
+int parse_int(const std::string_view& sv) {
+    int val = 0;
+    bool found_digit = false;
+    for (char c : sv) {
+        if (c >= '0' && c <= '9') {
+            val = val * 10 + (c- '0');
+            found_digit = true;
+        } else if (found_digit) break;
+    }
+    return val;
+}
+
+
+//clean called when we erase orders
 void create_order(const std::vector<std::string_view>& tokens) {
     Order* order = new Order{
         .client_id =  parse_int(tokens[1]),
@@ -211,9 +244,8 @@ void create_order(const std::vector<std::string_view>& tokens) {
 }
 
 
-
-void cancel_order(const std::vector<std::string_view>& tokens) {
-    uint32_t token = static_cast<uint32_t>(parse_int(tokens[2]));
+void cancel_order(const std::string_view& tokenstr) {
+    uint32_t token = static_cast<uint32_t>(parse_int(tokenstr));
     auto it = g_token_to_order.find(token);
     if (it == g_token_to_order.end()) return;
 
@@ -221,6 +253,7 @@ void cancel_order(const std::vector<std::string_view>& tokens) {
     printf("C, Client %d, Token %u\n", order_to_cancel->client_id, order_to_cancel->token);
     cleanup_order(order_to_cancel);
 }
+
 
 int main() {
 
@@ -244,7 +277,7 @@ int main() {
         tokens.push_back(std::string_view(line.data() + start, line.size() - start));
 
         if (trim(tokens[0]) == "O") create_order(tokens);
-        else if (trim(tokens[0])== "X") cancel_order(tokens);
+        else if (trim(tokens[0])== "X") cancel_order(tokens[2]);
     }
 
     std::cout << "\n";
