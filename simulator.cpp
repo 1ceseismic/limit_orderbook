@@ -1,254 +1,247 @@
 #include <iostream>
 #include <fstream>
-#include <stdexcept>
 #include <sstream>
-#include <unordered_map>
+#include <string>
 #include <map>
-#include <memory>
-#include <deque>
+#include <unordered_map>
+#include <algorithm>
 #include <vector>
+#include <list>
 
-struct OrderBook;
-struct Order
-{
-    uint64_t id;
-    int client_id;
-    short book_id;
-    uint64_t token;
-    bool is_buy;
-    uint32_t quantity;
-    uint32_t price;
+struct PriceLevel;
+
+struct Order {
+    std::string client_id;
+    std::string token;
+    bool is_buy; 
+    int quantity;
+    int price;
+    std::list<Order*>::iterator q_pos; //avoid O(k) search in level ; we go straight to order position in o(1)
+    PriceLevel* price_lvl; //avoid O(logn) search in std::map lookup
+
+    Order(const std::string& cid, const std::string& tok, char s, int qty, int p) 
+        : client_id(cid), token(tok), is_buy(s == 'B'), quantity(qty), price(p), q_pos(), price_lvl(nullptr) {}
 };
 
-using optr = std::unique_ptr<Order>;
+struct PriceLevel {
+    std::list<Order*> orders;
 
-std::unordered_map<uint64_t, optr> id_index;
-uint64_t next_id = 1;
-
-static std::unordered_map<std::string, OrderBook> all_books;  
-static std::unordered_map<uint64_t, Order*> token_to_order;  //unclear whether we need multiple orderbook support  due to mmissing ids in  cancellaion input
-
-
-struct OrderBook
-{   
-    //price -> price level
-    std::map<int, std::deque<Order*>, std::greater<int>> bids;
-    std::map<int, std::deque<Order*>, std::less<int>> asks;
+    void add_order(Order* order){ 
+        orders.push_back(order);
+        order->q_pos = std::prev(orders.end());
+        order->price_lvl = this;
+     }
     
-    bool cancel_order(uint64_t token_id) {
-        auto token_it = token_to_order.find(token_id);
-        if (token_it == token_to_order.end()) {
-            return false; 
-        }
-        Order* o = token_it->second; 
-
-        id_index.erase(o->id);
-        token_to_order.erase(token_it);
-
-
-        return true;
+    void remove_order(Order* order) {
+        orders.erase(order->q_pos);
+        order->price_lvl = nullptr;
     }
+    
+    bool empty() const { return orders.empty(); }
+    Order* front() { return orders.empty() ? nullptr : orders.front(); }
 
+    void pop_front() {
+         if (!orders.empty()) {
+            orders.front()->price_lvl = nullptr;
+            orders.pop_front(); 
+        }
+    }
+};
 
-    void add_order(optr order) {
-        if (!order) return;
-        auto [it, inserted] = id_index.try_emplace(order->id, std::move(order));
-        if (!inserted) return;
+class OrderBook {
+private:
+    PriceLevel* best_bid = nullptr;  
+    PriceLevel* best_ask = nullptr;  
+    std::map<int, PriceLevel, std::greater<int>> bids; 
+    std::map<int, PriceLevel> asks;  
+    std::unordered_map<std::string, Order*> token_to_order;
+    
+    void update_best_bid() {
+        best_bid = bids.empty() ? nullptr : &(bids.begin()->second);
+    }
+    
+    void update_best_ask() {
+        best_ask = asks.empty() ? nullptr : &(asks.begin()->second);
+    }
+    
 
-        Order* o = it->second.get();
-        token_to_order[o->token] = o;
+public:
+    void add_order(Order* order) {
+        token_to_order[order->token] = order;
+        
+        std::cout << "A, " << order->client_id << ", " << order->token << "\n";
+        
+        match_order(order); 
+        //we matched, then cleanup rest of remaining for that order
+        if (order->quantity > 0){
+            if (order->is_buy){
+                bids[order->price].add_order(order);
+                update_best_bid();
+            }
+            else {
+                asks[order->price].add_order(order);
+                update_best_ask();
+            }
+        }
+    }
+    
+    void cancel_order(const std::string& client_id, const std::string& token) {
+        auto it = token_to_order.find(token);
+        if (it == token_to_order.end()) return;
+        
+        Order* order = it->second;
+        
+        if (order->price_lvl){
+            PriceLevel* level = order->price_lvl;
+            int price = order->price;
+            bool is_buy = order->is_buy;
 
-        if (o->is_buy) {
-            auto& opp = asks;
+            level->remove_order(order);
             
-            while (o->quantity > 0 && !opp.empty()) {
-                auto best_it = opp.begin();
-                int best_price = best_it->first;
-    
-                if (o->price < best_price) break; //no match
-    
-                auto& q = best_it->second; //the queue/level of orders for this price
-                int initial_quantity = o->quantity;
-                
-                while (!q.empty() && o->quantity > 0) {
-                    Order* m = q.front();
-                    if (m->quantity <= 0) {
-                        q.pop_front();
-                        continue;
-                    }
-                    
-                    int traded = std::min(o->quantity, m->quantity);
-
-                    printf("E, Client %d, Token %ld, %d, %d\n", m->client_id, m->token, traded, best_price);
-    
-                    o->quantity -= traded;
-                    m->quantity -= traded;
-    
-                    if (m->quantity == 0) {
-                        q.pop_front();
-                    }
-                }
-
-                if (initial_quantity > o->quantity) {
-                    int total_traded = initial_quantity - o->quantity;
-                    printf("E, Client %d, Token %ld, %d, %d\n", o->client_id, o->token, total_traded, best_price);
+            if(level->empty()){
+                if (is_buy){
+                    bids.erase(price);
+                    update_best_bid();
+                } else{
+                    asks.erase(price);
+                    update_best_ask();
                 }
             }
+        }
+        
+        token_to_order.erase(it);
+        std::cout << "C, " << client_id << ", " << token << "\n";
+        delete order;
+        
+    }
+    
+    void print_rem() const {
+        for (const auto& [price, level] : bids) {
+            for (const auto& order : level.orders) {
+                std::cout << "O, " << order->client_id << ", Orderbook 1, " << order->token << ", B, " << order->quantity << ", " << order->price << "\n";
+            }
+        }
+        
+        for (const auto& [price, level] : asks) {
+            for (const auto& order : level.orders) {
+                std::cout << "O, " << order->client_id << ", Orderbook 1, " << order->token << ", S, "
+                 << order->quantity << ", " << order->price << "\n";
+            }
+        }
+    }
+    
+private:
+void match_order(Order* inc_order) {
+
+    int executed_qty_tot = 0;
+    int last_tp = 0;
+
+    while (inc_order->quantity > 0 && (inc_order->is_buy ? best_ask != nullptr : best_bid != nullptr)) {
+
+        PriceLevel* opp_lvl = inc_order->is_buy ? best_ask : best_bid;
+        int opp_price = opp_lvl->front()->price;
+
+        bool prices_cross = inc_order->is_buy ? (inc_order->price >= opp_price) : (inc_order->price <= opp_price);  
+        if (!prices_cross) break;
+        
+        
+        // Match with all orders at this price level
+        while (inc_order->quantity > 0 && !opp_lvl->empty()) {
+
+            Order* resting_o = opp_lvl->front();
+            int trade_qty = std::min(inc_order->quantity, resting_o->quantity);
+            int trade_price = resting_o->price;
+
+            std::cout << "E, " << resting_o->client_id << ", " << resting_o->token << ", " << trade_qty << ", " << trade_price << "\n";
+
+            executed_qty_tot += trade_qty;
+            last_tp = trade_price;
+
+            inc_order->quantity -= trade_qty;
+            resting_o->quantity -= trade_qty;
             
-            if (o->quantity > 0) {
-                bids[o->price].push_back(o);
+            // we remove any fully-used resting orders
+            if (resting_o->quantity == 0) {
+                opp_lvl->pop_front();
+                token_to_order.erase(resting_o->token);
+                delete resting_o;
+            }
+        }
+        
+        //remove empty price level, then we update the next best level in books state
+        if (opp_lvl->empty()) {
+            if (inc_order->is_buy) {
+                asks.erase(opp_price);
+                update_best_ask();
             } else {
-                id_index.erase(it);
-                token_to_order.erase(o->token);
-            }
-            
-        } else { //handle sell, match against bids 
-            auto& opp = bids;
-    
-            while (o->quantity > 0 && !opp.empty()) {
-                auto best_it = opp.begin();
-                int best_price = best_it->first;
-    
-                if (o->price > best_price) break; // No match
-                
-                auto& q = best_it->second;
-                int initial_quantity = o->quantity;
-    
-                while (!q.empty() && o->quantity > 0) {
-                    Order* m = q.front();
-                    if (m->quantity <= 0) {
-                        q.pop_front();
-                        continue;
-                    }
-                    int traded = std::min(o->quantity, m->quantity);
-                    
-                    printf("E, Client %d, Token %ld, %d, %d\n", m->client_id, m->token, traded, best_price); //resting order
-    
-                    o->quantity -= traded;
-                    m->quantity -= traded;
-                    
-                    if (m->quantity == 0) {
-                        q.pop_front();
-                    }
-                }
-                //after all trades at this price ; print incoming order
-                if (initial_quantity > o->quantity) {
-                    int total_traded = initial_quantity - o->quantity;
-                    printf("E, Client %d, Token %ld, %d, %d\n", o->client_id, o->token, total_traded, best_price);
-                }
-            }
-    
-            //leftover for book
-            if (o->quantity > 0) {
-                asks[o->price].push_back(o);
-            } else { //fully executed so we can rm
-                id_index.erase(it);
-                token_to_order.erase(o->token);
+                bids.erase(opp_price);
+                update_best_bid();
             }
         }
+         
     }
-    
+    if (executed_qty_tot > 0){
+        std::cout <<"E, "<<inc_order->client_id<<", "<<inc_order->token<<", "<<executed_qty_tot<<", "<< last_tp<<"\n";
+    }
+
+}
 };
 
 
-inline uint64_t extractId(const std::string& s) {
-    size_t num_pos = s.find_last_of(' ');
-    if (num_pos == std::string::npos || num_pos + 1 >= s.size()) {
-        throw std::invalid_argument("invalid id format " + s);
-    }
-    return std::stoull(s.substr(num_pos + 1));
-}
+std::vector<std::string> parse_line(const std::string& line) {
+    std::vector<std::string> tokens;
 
-inline std::string trim(const std::string& s){
-    auto start = s.find_first_not_of(" \t");
-    if (start == std::string::npos) return "";
-
-    auto end = s.find_last_not_of(" \t");
-    return s.substr(start, end - start + 1);
-}
-
-
-void parseOB(std::istream& input, OrderBook& ob){
-    using namespace std;
-    string line;
-
-    while (getline(input, line)){
-        if (line.empty()) continue;
-
-        istringstream sst(line);
-        vector<string> tokens;
-        string token;
-
-        while (std::getline(sst, token, ',')) tokens.push_back(trim(token));
-        if (tokens.empty()) continue;
-        if (tokens[0]  == "O" && tokens.size() == 7){
-            string book_name = tokens[2];
-            OrderBook& ob = all_books[book_name];
-            Order order{
-                .id =  next_id++,
-                .client_id = extractId(tokens[1]),
-                .book_id = extractId(book_name),
-                .token = extractId(tokens[3]),
-                .is_buy = (tokens[4] == "B"),
-                .quantity =std::stoul(tokens[5]),
-                .price = std::stoul(tokens[6]),
-            };            
-            printf("A, Client %d, Token %d\n", order.client_id, order.token);
-
-            token_to_order[order.token] = &order;
-
-            if (order.is_buy) {
-                ob.add_order(std::make_unique<Order>(order)); 
-            } else { 
-                ob.add_order(std::make_unique<Order>(order)); 
-            }
-
-        } else if ((tokens[0] == "X" || tokens[0] == "C") && tokens.size() ==3){
-            uint64_t tok_cancel = extractId(tokens[2]);
-            auto it = token_to_order.find(tok_cancel);
-            
-            if (it != token_to_order.end()){                
-                if (ob.cancel_order(it->second->id)){
-                    cout <<"C, " <<tokens[1]<<", "<<tokens[2]<<"\n";
-                }      
-            }
-            
-        } else {
-            throw std::invalid_argument("invalid line format");
-        }
-    }
-    return;
-}
-
-
-int main(){
-    OrderBook ob;
-    std::ifstream infile("input_orders.txt");
-    if (!infile) {std::cerr << "cant open  file\n"; return 1;}
-
-    parseOB(infile, ob);
-    std::cout <<"\n";
+    size_t start_pos =0;
+    const std::string whitepsace = " \t";
     
-    for (const auto& [bname, _ob] :  all_books){
-        for (const auto& [price, plevel] : _ob.bids){
+    while (start_pos < line.length()) {
+        size_t end_pos = line.find(',', start_pos);
 
-            for (Order* o : plevel){
-                if (o->quantity > 0) {//not fully executed
-                    char type = o->is_buy ? 'B' : 'S';
-                    printf("O, Client %d, %s, Token %ld, %c, %ld, %ld \n", o->client_id, o->book_id, o->token, type, o->quantity, o->price);
-                }
-            }
+        if (end_pos == std::string::npos) {
+            end_pos = line.length();
         }
 
-        for (const auto& [price, plevel] : _ob.asks){
-            for (Order* o : plevel){
-                if (o->quantity > 0) {//not fully executed
-                    char type = o->is_buy ? 'B' : 'S';
-                    printf("O, Client %d, Orderbook %d, Token %ld, %c, %ld, %ld \n", o->client_id, o->book_id, o->token, type, o->quantity, o->price);
-                }
-            }
+        size_t token_start = line.find_first_not_of(whitepsace, start_pos);
+
+        if (token_start != std::string::npos && token_start  < end_pos){
+            size_t token_end = line.find_last_not_of(whitepsace, end_pos-1);
+
+            tokens.push_back(line.substr(token_start, token_end - token_start  + 1));
         }
 
+        start_pos = end_pos+1;
     }
+    return tokens;
+}
+
+int main(int argc, char* argv[]) {
+    std::string filename = argc > 1 ? argv[1] : "input_orders.txt";
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "file error\n";
+        return 1;
+    }
+    
+    OrderBook orderbook;
+    std::string line;
+    
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        
+        auto tokens = parse_line(line);
+        if (tokens.empty()) continue;
+        
+        if (tokens[0] == "O" && tokens.size() >= 7) {
+            Order* order = new Order(tokens[1], tokens[3], tokens[4][0], std::stoi(tokens[5]), std::stoi(tokens[6]));
+            orderbook.add_order(order);
+            
+        } else if (tokens[0] == "X" && tokens.size() >= 3) {
+            orderbook.cancel_order(tokens[1], tokens[2]);
+        }
+    }
+    
+    std::cout << "\n"; 
+    orderbook.print_rem();
+    
     return 0;
 }
