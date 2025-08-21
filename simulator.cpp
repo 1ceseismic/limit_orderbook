@@ -42,8 +42,7 @@ struct Order {
     PriceLevel* price_lvl = nullptr; //for O(1) erasures from its level - i do note this is semi-redundant with our bids/asks pindex; but its 1 less hashmap lookup and clearer code 
 };
 
-class OrderPool{
-    private:
+struct OrderPool{
 
     std::vector<Order*> pool;
     void grow() {
@@ -53,7 +52,6 @@ class OrderPool{
         for (int i=0; i < POOL_SZ; ++i) pool.push_back(new Order());
     }
 
-    public:
     OrderPool() { grow();}
     ~OrderPool() { for (Order* o : pool) delete o;}
 
@@ -171,7 +169,6 @@ anything leftover of incoming is placed onto book, and any used-up resting order
   got rid of our memory pooling so deleting manually agaub - but its slightly cleaner
 
 */
-
 void OrderBook::match_process(Order* o_inc) {
     std::vector<std::pair<int, uint32_t>> execs;
 
@@ -190,6 +187,14 @@ void OrderBook::match_process(Order* o_inc) {
         
         while (!q.empty() && o_inc->quantity > 0) {
             Order* o_rest = q.head;
+
+            //prevent self trades
+            // if (o_rest->client_id == o_inc->client_id) {
+            //     token_to_order.erase(o_inc->token);
+            //     order_pool.deallocate(o_inc);
+            //     return;
+            // }
+
             uint32_t traded_qty = std::min(o_inc->quantity, o_rest->quantity);
 
             printf("E, Client %d, Token %u, %u, %d\n", o_rest->client_id, o_rest->token, traded_qty, cur_price);

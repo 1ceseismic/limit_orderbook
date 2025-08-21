@@ -11,67 +11,84 @@ at each pricelevel there is a queue (custom `OrderQueue` for pointer reallocatio
 
 Upon every order entered from input:
 
-- this incoming order is checked against the opposite side of its designated book for a price match, if not then we create a new level and place this new order in it 
+- parser splits line into string_view tokens (no copies)
 
-- a match will then accumulate a quantity off of order trades in that matched price level's queue until either incoming is fulfilled or level is empty. Each trade occurs at the resting order's price
+- route to either create or cancel order on first token
 
-- If order is fully filled; it's removed from the book and separately if the price level becomes empty, it's also removed to keep book clean
+- on new order: we collect next available object from the pool (`allocate()`) - populate it with our fields, and pass to create_order
 
-- if this incoming order is still only partially filled after all possible matches ;  its remaining quantity is added to the book as a new resting order at its specified price level
+- we check order within price bounds, then we find existing or create its associated book, then we proceed to matching
 
-Any cancellations are handled by looking up the order's unique token in the token->Order ptr hashmap and removing it from its price queue
+- get opposite pricelevl, and compare the head of the queues for cross match; if true we go through the level trading resting order quantities until either the level is exhausted or incoming order is fulfilled. If new level then we have to **re-search** for the next non-empty price level (this is one fault point of flat vector approach)
 
-also,  for simplicity and since its very small project ; manually memory is easier + more suitable over smart pointers overhead (even though completely negligible for this)
+- if order fulfilled we return memory to pool, else we add it to book 
+
+Any cancellations are handled by removing order from price level, then returning memory to pool by deallocating 
+
 
 
 ```mermaid
 classDiagram
-    direction BT
+    direction LR
 
-    class Order {
-        PriceLevel* price_lvl
-        int client_id
-        uint32_t token
-        bool is_buy
-        uint32_t quantity
-        int price
-        Order* next
-        Order* prev
-    }
-
-    class OrderQueue {
-        Order* head
-        Order* tail
-        +push_back(Order*) void
-        +pop_front() Order*
-    }
-
-    class PriceLevel {
-        int price
-        OrderQueue orders
-        PriceLevel* next
-        PriceLevel* prev
+    class simulator {
+        <<Manager>>
+        -OrderPool order_pool
+        -unordered_map~uint32_t, Order*~ token_to_order
+        -unordered_map~int, OrderBook~ all_books
+        +process_message(string_view) void
+        +print_fstate() void
     }
 
     class OrderBook {
-        PriceLevel* bids_head
-        PriceLevel* asks_head
-        +get_create_pricelvl(int, bool) PriceLevel*
+        <<Instrument>>
+        -vector~PriceLevel~ bids
+        -vector~PriceLevel~ asks
+        -int best_bid_pr
+        -int best_ask_pr
+        +match_process(Order*) void
+        +add_to_book(Order*) void
+        +cancel(Order*) void
+    }
+
+    class OrderPool {
+        <<Memory Manager>>
+        -vector~Order*~ pool
+        +allocate() Order*
+        +deallocate(Order*) void
+    }
+
+    class PriceLevel {
+        <<Price Point>>
+        +OrderQueue orders
     }
     
-    class GlobalState {
-        <<singleton>>
-        OrderBook g_order_book
-        map~uint32_t, Order*~ g_token_to_order
+    class OrderQueue {
+        <<Intrusive FIFO Queue>>
+        +Order* head
+        +Order* tail
+        +push_back(Order*) void
+        +remove_order(Order*) void
     }
 
-    Order --> "0..1" Order : next_in_queue
+    class Order {
+        <<Data Object>>
+        +int client_id
+        +int book_id
+        +uint32_t token
+        +bool is_buy
+        +uint32_t quantity
+        +int price
+        +Order* next
+        +Order* prev
+        +PriceLevel* price_lvl
+    }
 
-    OrderQueue --> "0..*" Order : head/tail
+    simulator "1" o-- "1" OrderPool : owns
+    simulator "1" *-- "0..*" OrderBook : manages
+    simulator "1" o-- "0..*" Order : tracks all by token
+    
+    OrderBook "1" *-- "*" PriceLevel : contains (bids/asks vectors)
     PriceLevel "1" *-- "1" OrderQueue : contains
-    PriceLevel --> "0..1" PriceLevel : next/prev
-
-    OrderBook "1" *-- "0..*" PriceLevel : bids_head/asks_head
-    GlobalState "1" *-- "1" OrderBook : holds
-    GlobalState "1" o-- "0..*" Order : tracks by token
+    OrderQueue "1" o-- "0..*" Order : manages (head/tail pointers)
 ```
