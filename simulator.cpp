@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-
+#include <cstdint>
 
 int parse_int(const std::string_view& sv) {
     int val = 0;
@@ -30,7 +30,7 @@ doubly-linked order object  can access its prcie level immediately;  we store
 both next and prev pointers to allow 'linking' the removed orders neighbours immediately in queues remove_order
 */
 struct Order {
-    PriceLevel* price_lvl; //for O(1) erasures from its level
+    PriceLevel* price_lvl; //for O(1) erasures from its level -  i do note this is semi-redundant with our bids/asks pindex; but its 1 less hashmap lookup and clearer code 
     int client_id;
     uint32_t token;
     bool is_buy;
