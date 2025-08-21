@@ -26,7 +26,7 @@ also,  for simplicity and since its very small project ; manually memory is easi
 
 ```mermaid
 classDiagram
-    direction LR
+    direction BT
 
     class Order {
         PriceLevel* price_lvl
