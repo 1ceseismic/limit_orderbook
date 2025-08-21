@@ -139,24 +139,8 @@ struct OrderBook{
         return -1;
     }
 
-    void add_to_book(Order* o) {
-        if (o->is_buy){
-            bids[o->price].orders.push_back(o);
-            o->price_lvl = &bids[o->price];
-            if (best_bid_pr  == -1 || o ->price > best_bid_pr){
-                best_bid_pr = o->price;
-            }
-        }
-        else {
-            asks[o->price].orders.push_back(o);
-            o->price_lvl = &bids[o->price];
-            if (best_ask_pr  == -1 || o ->price > best_ask_pr){
-                best_ask_pr = o->price;
-            }
-        }
-    }
-
-    void match_process(Order* incoming);
+    void add_to_book(Order* o);
+    void match_process(Order* o);
     void cancel(Order* o);
 
     void print_state () const;
@@ -177,25 +161,30 @@ class simulator{
 public:
     void process_message(std::string_view line);
     void print_fstate() const;
-
 };
 
+
+/*
+matching and executing logic ; we traverse all price levels (the ladder);
+for each pricelevel we go through the sorted queue of orders, trying to fulfill the incoming order
+anything leftover of incoming is placed onto book, and any used-up resting orders will be removed from book + cleaned up
+  got rid of our memory pooling so deleting manually agaub - but its slightly cleaner
+
+*/
 
 void OrderBook::match_process(Order* o_inc) {
     std::vector<std::pair<int, uint32_t>> execs;
 
     bool is_buy = o_inc->is_buy;
-    auto& opp_book = is_buy ? asks : bids;
     int& best_pr = is_buy ? best_ask_pr : best_bid_pr;
-    auto next_best_pr = [&]() { is_buy ? find_next_best_ask() : find_next_best_bid(); };
     
     auto prices_cross = [&](int rest_price) {
         return is_buy ? o_inc->price >= rest_price : o_inc->price <= rest_price;
     };
 
     while (o_inc->quantity > 0 && best_pr != -1 && prices_cross(best_pr)) {
-        int current_price = best_pr;
-        PriceLevel& cur_lvl = opp_book[current_price];
+        int cur_price = best_pr;
+        PriceLevel& cur_lvl = is_buy ? asks[cur_price] : bids[cur_price];
         OrderQueue& q = cur_lvl.orders;
         uint32_t qty_traded_onlevel  = 0;
         
@@ -203,7 +192,7 @@ void OrderBook::match_process(Order* o_inc) {
             Order* o_rest = q.head;
             uint32_t traded_qty = std::min(o_inc->quantity, o_rest->quantity);
 
-            printf("E, Client %d, Token %u, %u, %d\n", o_rest->client_id, o_rest->token, traded_qty, current_price);
+            printf("E, Client %d, Token %u, %u, %d\n", o_rest->client_id, o_rest->token, traded_qty, cur_price);
             
             o_inc->quantity -= traded_qty;
             o_rest->quantity -= traded_qty;
@@ -217,7 +206,7 @@ void OrderBook::match_process(Order* o_inc) {
         }
         
         if (qty_traded_onlevel  > 0) {
-            execs.push_back({current_price, qty_traded_onlevel});
+            execs.push_back({cur_price, qty_traded_onlevel});
         }
 
         if (q.empty()) {
@@ -330,6 +319,22 @@ void OrderBook::cancel(Order* order){
     }
 }
 
+
+void OrderBook::add_to_book(Order* o) {
+    if (o->is_buy) {
+        bids[o->price].orders.push_back(o);
+        o->price_lvl = &bids[o->price];
+        best_bid_pr = std::max(best_bid_pr, o->price);
+    } else {
+        asks[o->price].orders.push_back(o);
+        o->price_lvl = &asks[o->price];
+        if (best_ask_pr == -1 || o->price < best_ask_pr) {
+            best_ask_pr = o->price;
+        }
+    }
+}
+
+
 void OrderBook::print_state() const{
 
     if (best_bid_pr != -1){
@@ -359,14 +364,6 @@ void simulator::print_fstate() const{
         book.second.print_state();
     }
 }
-
-/*
-matching and executing logic ; we traverse all price levels (the ladder);
-for each pricelevel we go through the sorted queue of orders, trying to fulfill the incoming order
-anything leftover of incoming is placed onto book, and any used-up resting orders will be removed from book + cleaned up
-  got rid of our memory pooling so deleting manually agaub - but its slightly cleaner
-
-*/
 
 int main() {
     simulator sim;
