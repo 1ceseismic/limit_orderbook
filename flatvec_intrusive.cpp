@@ -183,7 +183,7 @@ struct OrderBook {
     anything leftover of incoming is placed onto book, and any used-up resting orders will be removed from book + cleaned up
     */
     void match_process(Order* o_inc, OrderPool& pool, auto& token_map) {
-        std::vector<std::pair<int, uint32_t>> execs;
+        std::map<int, uint32_t> execs;
 
         bool is_buy = o_inc->is_buy;
         
@@ -193,19 +193,19 @@ struct OrderBook {
             if (!prices_cross || best_pr == -1) break;
 
             OrderQueue& cur_lvl = is_buy ? asks[best_pr] : bids[best_pr];
-            uint32_t qty_traded_onlevel  = 0;
             
             while (!cur_lvl.empty() && o_inc->quantity > 0) {
                 Order* o_rest = cur_lvl.head;
-                if (o_rest->client_id == o_inc->client_id) break; //no self trades ; we just exit
+                //if (o_rest->client_id == o_inc->client_id) break; //no self trades ; we just exit
           
                 uint32_t traded_qty = std::min(o_inc->quantity, o_rest->quantity);
 
                 printf("E, Client %d, Token %u, %u, %d\n", o_rest->client_id, o_rest->token, traded_qty, best_pr);
                 
+                execs[best_pr] += traded_qty; 
+
                 o_inc->quantity -= traded_qty;
                 o_rest->quantity -= traded_qty;
-                qty_traded_onlevel  += traded_qty;
 
                 if (o_rest->quantity == 0) {
                     cur_lvl.pop_front();
@@ -214,18 +214,14 @@ struct OrderBook {
                 }
             }
             
-            if (qty_traded_onlevel  > 0) {
-                execs.push_back({best_pr, qty_traded_onlevel});
-            }
-
             if (cur_lvl.empty()) {
                 if (is_buy) find_next_best_ask();
                 else find_next_best_bid();
             }
         }
 
-        for (const auto& exec : execs) {
-            printf("E, Client %d, Token %u, %u, %d\n", o_inc->client_id, o_inc->token, exec.second, exec.first);
+        for (const auto& e : execs) {
+            printf("E, Client %d, Token %u, %u, %d\n", o_inc->client_id, o_inc->token, e.second, e.first);
         }
 
         if (o_inc->quantity > 0) {
@@ -300,7 +296,6 @@ void simulator::cancel_order(uint32_t token) {
     auto it = token_to_order.find(token);
     if (it == token_to_order.end()) return; //probably already fulfilled
     
-
     Order* order = it->second;
     printf("C, Client %d, Token %u\n", order->client_id, order->token);
 
@@ -326,7 +321,6 @@ void simulator::process_message(const std::string_view& line) {
     }
     tokens.push_back(trim({&line[start], line.length() - start}));
     if (tokens.empty()) return;
-
 
     if (tokens[0] == "O") {
         Order* order = order_pool.allocate();

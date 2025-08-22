@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <functional>
 
 int parse_int(const std::string_view& sv) {
     int val = 0;
@@ -106,6 +105,7 @@ struct OrderQueue {
     }
 };
 
+
 /*
 orderbook struct for holding heads for O(1) retrieving est bid & offer
 if lookup miss , we find where to insert new price level per order type
@@ -114,12 +114,11 @@ struct OrderBook {
 
     std::map<int, OrderQueue, std::greater<int>> bids; //these only exist for the quick lookup of existing levels we can insert into
     std::map<int, OrderQueue> asks;
-
     void match_process (Order*, auto&, OrderPool&);
     void cancel (Order* o_to_cancel);
-
     OrderQueue* best_bid_q = nullptr;
     OrderQueue* best_ask_q = nullptr;
+
     void update_best_bid(){
         best_bid_q = bids.empty() ? nullptr : &bids.begin()->second;
     }
@@ -150,7 +149,7 @@ class simulator {
 
 public:
     simulator( size_t pool_size = 5000) : order_pool(pool_size) {};
-    void process_msg(const std::string& line);
+    void process_msg(const std::string_view& line);
     void print_fstate() const;
     void cancel_order(Order* order);
     void create_order(Order* order);
@@ -165,31 +164,26 @@ anything leftover of incoming is placed onto book, and any used-up resting order
 
 */
 void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& pool) {
-    std::vector<std::pair<int, uint32_t>> execs;
+    std::map<int, uint32_t> execs;
 
-    auto match_engine = [&](auto& opp_book, OrderQueue*& best_q) {
-
-        while (incoming_o->quantity > 0 && best_q != nullptr) {
+    auto match_engine = [&](OrderQueue*& best_q) {
+        while (incoming_o->quantity > 0 && best_q != nullptr) { //we check every  available price level to iterate over 
             OrderQueue* q = best_q;
             int trade_price = q->head->price;
-            uint32_t qty_traded_onlevel = 0;
-
-            // if (q->head->client_id == incoming_o->client_id) { //no self trades
-            //     return;
-            // }
 
             bool prices_cross = incoming_o->is_buy ? (incoming_o->price >= trade_price) : (incoming_o->price <= trade_price);
             if (!prices_cross) break;
 
-            while (!q->empty() && incoming_o->quantity > 0) {
-                Order* resting_ord= q->head;
+            while (!q->empty() && incoming_o->quantity > 0) { // actually traverse the level
+                Order* resting_ord = q->head;
 
                 uint32_t traded_qty = std::min(incoming_o->quantity, resting_ord->quantity);
                 printf("E, Client %d, Token %u, %u, %d\n", resting_ord->client_id, resting_ord->token, traded_qty, resting_ord->price);
+                
+                execs[trade_price] += traded_qty; 
 
                 incoming_o->quantity -= traded_qty;
                 resting_ord->quantity -= traded_qty;
-                qty_traded_onlevel +=traded_qty;
 
                 if (resting_ord->quantity == 0) {
                     q->pop_front();
@@ -198,32 +192,26 @@ void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& poo
                 }
             }
             
-            if (qty_traded_onlevel > 0){
-                execs.push_back({trade_price, qty_traded_onlevel});
-            }
-
             if (q->empty()) {
-                if (incoming_o-> is_buy) {
-                    asks.erase(trade_price);
+                if (incoming_o->is_buy) {
+                    asks.erase(trade_price); //we cleanup empty levels
                     update_best_ask();
                 } else {
                     bids.erase(trade_price);
                     update_best_bid();
                 }
             }
-
         }
     };
 
     if (incoming_o->is_buy) {
-        match_engine(asks, best_ask_q);
+        match_engine(best_ask_q);
     } else {
-        match_engine(bids, best_bid_q);
+        match_engine(best_bid_q);
     }
 
-
-    for (const auto& exec : execs) {
-        printf("E, Client %d, Token %u, %u, %d\n", incoming_o->client_id, incoming_o->token, exec.second, exec.first);
+    for (const auto& entry : execs) {
+        printf("E, Client %d, Token %u, %u, %d\n", incoming_o->client_id, incoming_o->token, entry.second, entry.first);
     }
     
     if (incoming_o->quantity > 0) {
@@ -253,18 +241,16 @@ void OrderBook::cancel(Order* order){
     }
 }
 
-void simulator::process_msg(const std::string& line) {
+void simulator::process_msg(const std::string_view& line) {
     if (line.empty()) return;
 
     std::vector<std::string_view> tokens;
-    size_t start = 0;
-    size_t end = 0;
-    while ((end = line.find(',', start)) != std::string::npos) {
-        tokens.push_back(trim({&line[start], end - start}));
+    size_t start = 0, end = 0;
+    while ((end = line.find(',', start)) != std::string_view::npos) {
+        tokens.push_back(trim({line.data() + start, end - start}));
         start = end + 1;
     }
-    tokens.push_back(trim({&line[start], line.length() - start}));
-
+    tokens.push_back(trim({line.data() + start, line.length() - start}));
     if (tokens.empty()) return;
 
     if (tokens[0] == "O") {
@@ -285,7 +271,6 @@ void simulator::process_msg(const std::string& line) {
     } else if (tokens[0] == "X") {
         uint32_t token_to_cancel = parse_int(tokens[2]);
         auto it = token_to_order.find(token_to_cancel);
-
         if (it != token_to_order.end()) {
             cancel_order(it->second);
         }
@@ -294,11 +279,9 @@ void simulator::process_msg(const std::string& line) {
 
 
 void simulator::cancel_order(Order* order) {
-
     auto it = token_to_order.find(order->token);
     if (it == token_to_order.end()) return; //probably already fulfilled
     
-
     auto book_it = all_books.find(order->book_id);
     if (book_it == all_books.end()) return;
     
@@ -323,10 +306,7 @@ void simulator::create_order(Order* order) {
     printf("A, Client %d, Token %u\n", order->client_id, order->token);
     
     token_to_order[order->token] = order;
-    if (all_books.find(order->book_id) == all_books.end()) {
-        all_books.emplace(order->book_id, OrderBook()); 
-    }
-    all_books.at(order->book_id).match_process(order, token_to_order, order_pool);
+    all_books[order->book_id].match_process(order, token_to_order, order_pool);
 }
 
 

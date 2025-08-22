@@ -1,12 +1,28 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
+#include <string_view> 
 #include <map>
 #include <unordered_map>
 #include <algorithm>
 #include <vector>
 #include <list>
+
+int parse_int(const std::string_view& sv) {
+    int val = 0;
+    for (char c : sv) {
+        if (c >= '0' && c <= '9') {
+            val = val * 10 + (c - '0');
+        }
+    }
+    return val;
+}
+
+std::string_view trim(std::string_view sv) {
+    sv.remove_prefix(std::min(sv.find_first_not_of(" \t\n\r"), sv.size()));
+    sv.remove_suffix(std::min(sv.size() - sv.find_last_not_of(" \t\n\r") - 1, sv.size()));
+    return sv;
+}
 
 struct PriceLevel;
 
@@ -19,7 +35,7 @@ struct Order {
     std::list<Order*>::iterator q_pos; //avoid O(k) search in level ; we go straight to order position in o(1)
     PriceLevel* price_lvl; //avoid O(logn) search in std::map lookup
 
-    Order(const std::string& cid, const std::string& tok, char s, int qty, int p) 
+    Order(const std::string_view& cid, const std::string_view& tok, char s, int qty, int p) 
         : client_id(cid), token(tok), is_buy(s == 'B'), quantity(qty), price(p), q_pos(), price_lvl(nullptr) {}
 };
 
@@ -132,9 +148,7 @@ public:
     
 private:
 void match_order(Order* inc_order) {
-
-    int executed_qty_tot = 0;
-    int last_tp = 0;
+    std::map<int, int> execs;
 
     while (inc_order->quantity > 0 && (inc_order->is_buy ? best_ask != nullptr : best_bid != nullptr)) {
 
@@ -144,7 +158,6 @@ void match_order(Order* inc_order) {
         bool prices_cross = inc_order->is_buy ? (inc_order->price >= opp_price) : (inc_order->price <= opp_price);  
         if (!prices_cross) break;
         
-        // Match with all orders at this price level
         while (inc_order->quantity > 0 && !opp_lvl->empty()) {
 
             Order* resting_o = opp_lvl->front();
@@ -152,10 +165,8 @@ void match_order(Order* inc_order) {
             int trade_price = resting_o->price;
 
             std::cout << "E, " << resting_o->client_id << ", " << resting_o->token << ", " << trade_qty << ", " << trade_price << "\n";
-
-            executed_qty_tot += trade_qty;
-            last_tp = trade_price;
-
+            
+            execs[trade_price] += trade_qty; 
             inc_order->quantity -= trade_qty;
             resting_o->quantity -= trade_qty;
             
@@ -179,39 +190,11 @@ void match_order(Order* inc_order) {
         }
          
     }
-    if (executed_qty_tot > 0){
-        std::cout <<"E, "<<inc_order->client_id<<", "<<inc_order->token<<", "<<executed_qty_tot<<", "<< last_tp<<"\n";
+    for (const auto& entry : execs) {
+        std::cout << "E, " << inc_order->client_id << ", " << inc_order->token << ", " << entry.second << ", " << entry.first << "\n";
     }
-
 }
 };
-
-
-std::vector<std::string> parse_line(const std::string& line) {
-    std::vector<std::string> tokens;
-
-    size_t start_pos =0;
-    const std::string whitepsace = " \t";
-    
-    while (start_pos < line.length()) {
-        size_t end_pos = line.find(',', start_pos);
-
-        if (end_pos == std::string::npos) {
-            end_pos = line.length();
-        }
-
-        size_t token_start = line.find_first_not_of(whitepsace, start_pos);
-
-        if (token_start != std::string::npos && token_start  < end_pos){
-            size_t token_end = line.find_last_not_of(whitepsace, end_pos-1);
-
-            tokens.push_back(line.substr(token_start, token_end - token_start  + 1));
-        }
-
-        start_pos = end_pos+1;
-    }
-    return tokens;
-}
 
 int main(int argc, char* argv[]) {
     std::string filename = argc > 1 ? argv[1] : "input_orders.txt";
@@ -226,15 +209,22 @@ int main(int argc, char* argv[]) {
     while (std::getline(file, line)) {
         if (line.empty()) continue;
         
-        auto tokens = parse_line(line);
+        std::vector<std::string_view> tokens;
+        size_t start = 0;
+        size_t end = 0;
+        while ((end = line.find(',', start)) != std::string::npos) {
+            tokens.push_back(trim({line.data() + start, end - start}));
+            start = end + 1;
+        }
+        tokens.push_back(trim({line.data() + start, line.length() - start}));
         if (tokens.empty()) continue;
-        
-        if (tokens[0] == "O" && tokens.size() >= 7) {
-            Order* order = new Order(tokens[1], tokens[3], tokens[4][0], std::stoi(tokens[5]), std::stoi(tokens[6]));
+
+        if (tokens[0] == "O") {
+            Order* order = new Order(tokens[1], tokens[3], tokens[4][0], parse_int(tokens[5]), parse_int(tokens[6]));
             orderbook.add_order(order);
             
-        } else if (tokens[0] == "X" && tokens.size() >= 3) {
-            orderbook.cancel_order(tokens[1], tokens[2]);
+        } else if (tokens[0] == "X") {
+            orderbook.cancel_order(std::string(tokens[1]), std::string(tokens[2]));
         }
     }
     
