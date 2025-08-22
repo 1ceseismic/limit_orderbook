@@ -2,3 +2,9 @@
 .editorconfig
 /.vs
 CppProperties.json
+flatvec_output.txt
+mapll_output.txt
+sim_output.txt
+flatvec.exe
+mapLL.exe
+stdlist.exe
