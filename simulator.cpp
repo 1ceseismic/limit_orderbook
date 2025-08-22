@@ -144,7 +144,6 @@ void match_order(Order* inc_order) {
         bool prices_cross = inc_order->is_buy ? (inc_order->price >= opp_price) : (inc_order->price <= opp_price);  
         if (!prices_cross) break;
         
-        
         // Match with all orders at this price level
         while (inc_order->quantity > 0 && !opp_lvl->empty()) {
 
@@ -221,7 +220,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "file error\n";
         return 1;
     }
-    
     OrderBook orderbook;
     std::string line;
     

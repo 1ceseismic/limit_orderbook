@@ -1,0 +1,1000 @@
+O, Client 40, Orderbook 2, Token 1, S, 910, 983
+X, Client 40, Token 1
+O, Client 19, Orderbook 12, Token 2, S, 775, 982
+X, Client 19, Token 2
+O, Client 25, Orderbook 12, Token 3, B, 810, 1009
+O, Client 8, Orderbook 19, Token 4, B, 200, 1007
+X, Client 25, Token 3
+X, Client 8, Token 4
+O, Client 22, Orderbook 13, Token 5, B, 350, 1048
+O, Client 8, Orderbook 1, Token 6, B, 405, 1021
+O, Client 5, Orderbook 20, Token 7, S, 150, 958
+O, Client 33, Orderbook 2, Token 8, B, 490, 1045
+O, Client 7, Orderbook 17, Token 9, B, 200, 1040
+O, Client 27, Orderbook 9, Token 10, B, 740, 1032
+O, Client 26, Orderbook 9, Token 11, B, 450, 1021
+O, Client 17, Orderbook 5, Token 12, B, 185, 1044
+O, Client 15, Orderbook 4, Token 13, B, 655, 1015
+X, Client 17, Token 12
+O, Client 12, Orderbook 10, Token 14, B, 465, 1012
+X, Client 33, Token 8
+O, Client 34, Orderbook 18, Token 15, S, 835, 980
+X, Client 8, Token 6
+O, Client 35, Orderbook 1, Token 16, S, 500, 978
+X, Client 35, Token 16
+O, Client 33, Orderbook 7, Token 17, B, 180, 1004
+O, Client 40, Orderbook 20, Token 18, S, 200, 994
+O, Client 20, Orderbook 12, Token 19, B, 220, 1046
+X, Client 22, Token 5
+O, Client 5, Orderbook 10, Token 20, B, 540, 1023
+O, Client 24, Orderbook 4, Token 21, B, 880, 1037
+O, Client 6, Orderbook 11, Token 22, B, 700, 1027
+X, Client 6, Token 22
+O, Client 32, Orderbook 13, Token 23, B, 225, 1036
+O, Client 21, Orderbook 11, Token 24, S, 715, 984
+O, Client 38, Orderbook 8, Token 25, S, 715, 952
+O, Client 23, Orderbook 13, Token 26, S, 30, 968
+X, Client 23, Token 26
+O, Client 9, Orderbook 3, Token 27, B, 380, 1020
+O, Client 28, Orderbook 15, Token 28, B, 725, 1007
+O, Client 37, Orderbook 3, Token 29, S, 45, 953
+X, Client 5, Token 7
+X, Client 34, Token 15
+X, Client 7, Token 9
+X, Client 33, Token 17
+O, Client 14, Orderbook 6, Token 30, S, 905, 978
+X, Client 21, Token 24
+O, Client 11, Orderbook 4, Token 31, B, 230, 1026
+X, Client 11, Token 31
+O, Client 16, Orderbook 10, Token 32, B, 110, 1025
+O, Client 19, Orderbook 19, Token 33, S, 885, 991
+O, Client 2, Orderbook 14, Token 34, S, 235, 974
+O, Client 14, Orderbook 17, Token 35, S, 755, 975
+O, Client 22, Orderbook 11, Token 36, S, 760, 950
+O, Client 24, Orderbook 17, Token 37, S, 390, 992
+O, Client 15, Orderbook 18, Token 38, B, 320, 1022
+O, Client 6, Orderbook 18, Token 39, B, 555, 1001
+O, Client 13, Orderbook 3, Token 40, S, 210, 997
+O, Client 8, Orderbook 7, Token 41, S, 675, 1000
+O, Client 8, Orderbook 20, Token 42, B, 170, 1023
+O, Client 38, Orderbook 16, Token 43, S, 175, 974
+O, Client 27, Orderbook 14, Token 44, S, 155, 998
+O, Client 31, Orderbook 17, Token 45, B, 205, 1032
+O, Client 1, Orderbook 2, Token 46, B, 240, 1000
+X, Client 22, Token 36
+X, Client 32, Token 23
+O, Client 18, Orderbook 12, Token 47, B, 355, 1029
+X, Client 15, Token 38
+X, Client 9, Token 27
+O, Client 18, Orderbook 20, Token 48, B, 760, 1015
+X, Client 14, Token 30
+X, Client 28, Token 28
+O, Client 13, Orderbook 9, Token 49, S, 185, 952
+O, Client 12, Orderbook 20, Token 50, S, 720, 996
+O, Client 17, Orderbook 14, Token 51, S, 150, 996
+O, Client 35, Orderbook 2, Token 52, S, 455, 953
+X, Client 40, Token 18
+X, Client 14, Token 35
+O, Client 31, Orderbook 6, Token 53, S, 980, 969
+O, Client 39, Orderbook 4, Token 54, B, 470, 1020
+O, Client 16, Orderbook 11, Token 55, B, 970, 1030
+O, Client 25, Orderbook 9, Token 56, S, 520, 957
+X, Client 17, Token 51
+O, Client 21, Orderbook 7, Token 57, B, 600, 1014
+X, Client 18, Token 48
+O, Client 35, Orderbook 14, Token 58, B, 80, 1030
+O, Client 37, Orderbook 12, Token 59, B, 265, 1044
+O, Client 1, Orderbook 4, Token 60, S, 695, 956
+X, Client 8, Token 41
+O, Client 40, Orderbook 2, Token 61, B, 160, 1018
+X, Client 24, Token 37
+O, Client 35, Orderbook 17, Token 62, S, 325, 959
+X, Client 8, Token 42
+X, Client 27, Token 10
+O, Client 3, Orderbook 1, Token 63, S, 555, 993
+O, Client 29, Orderbook 5, Token 64, B, 915, 1033
+X, Client 5, Token 20
+O, Client 8, Orderbook 8, Token 65, B, 480, 1023
+O, Client 37, Orderbook 16, Token 66, S, 590, 980
+X, Client 1, Token 46
+O, Client 10, Orderbook 11, Token 67, S, 530, 956
+O, Client 3, Orderbook 11, Token 68, S, 385, 964
+O, Client 10, Orderbook 14, Token 69, S, 345, 958
+X, Client 16, Token 32
+O, Client 38, Orderbook 4, Token 70, B, 155, 1005
+X, Client 38, Token 43
+O, Client 22, Orderbook 9, Token 71, S, 70, 988
+O, Client 34, Orderbook 5, Token 72, B, 910, 1012
+X, Client 8, Token 65
+O, Client 21, Orderbook 11, Token 73, S, 35, 974
+X, Client 21, Token 57
+O, Client 11, Orderbook 11, Token 74, B, 100, 1013
+O, Client 36, Orderbook 3, Token 75, B, 855, 1044
+O, Client 16, Orderbook 2, Token 76, B, 60, 1009
+O, Client 14, Orderbook 2, Token 77, S, 455, 990
+X, Client 3, Token 68
+X, Client 10, Token 69
+X, Client 36, Token 75
+O, Client 25, Orderbook 12, Token 78, B, 25, 1036
+O, Client 37, Orderbook 10, Token 79, S, 405, 998
+O, Client 19, Orderbook 5, Token 80, S, 305, 958
+O, Client 23, Orderbook 7, Token 81, S, 635, 1000
+X, Client 23, Token 81
+O, Client 36, Orderbook 1, Token 82, S, 385, 961
+O, Client 32, Orderbook 8, Token 83, B, 45, 1014
+O, Client 17, Orderbook 3, Token 84, S, 15, 995
+O, Client 19, Orderbook 11, Token 85, B, 545, 1044
+O, Client 6, Orderbook 17, Token 86, S, 365, 994
+O, Client 4, Orderbook 10, Token 87, B, 735, 1000
+O, Client 2, Orderbook 10, Token 88, S, 165, 966
+O, Client 28, Orderbook 20, Token 89, B, 145, 1038
+O, Client 9, Orderbook 12, Token 90, S, 90, 957
+O, Client 8, Orderbook 2, Token 91, B, 90, 1009
+O, Client 1, Orderbook 12, Token 92, B, 670, 1020
+X, Client 14, Token 77
+O, Client 38, Orderbook 14, Token 93, S, 310, 976
+O, Client 2, Orderbook 20, Token 94, S, 730, 976
+X, Client 12, Token 50
+O, Client 15, Orderbook 6, Token 95, S, 870, 969
+X, Client 15, Token 13
+X, Client 35, Token 58
+O, Client 33, Orderbook 5, Token 96, S, 520, 987
+O, Client 17, Orderbook 17, Token 97, S, 450, 988
+O, Client 8, Orderbook 14, Token 98, B, 185, 1018
+X, Client 35, Token 52
+X, Client 36, Token 82
+O, Client 22, Orderbook 2, Token 99, B, 560, 1027
+X, Client 8, Token 91
+X, Client 38, Token 70
+O, Client 7, Orderbook 18, Token 100, S, 915, 960
+X, Client 11, Token 74
+O, Client 37, Orderbook 14, Token 101, B, 670, 1035
+O, Client 37, Orderbook 17, Token 102, B, 545, 1022
+O, Client 18, Orderbook 5, Token 103, B, 790, 1004
+O, Client 8, Orderbook 10, Token 104, S, 130, 977
+O, Client 25, Orderbook 7, Token 105, S, 895, 968
+O, Client 27, Orderbook 10, Token 106, S, 770, 954
+O, Client 34, Orderbook 18, Token 107, B, 380, 1022
+X, Client 16, Token 76
+O, Client 5, Orderbook 8, Token 108, B, 560, 1037
+O, Client 3, Orderbook 14, Token 109, B, 710, 1022
+O, Client 21, Orderbook 14, Token 110, B, 80, 1010
+X, Client 25, Token 56
+X, Client 5, Token 108
+O, Client 33, Orderbook 19, Token 111, B, 445, 1013
+O, Client 4, Orderbook 3, Token 112, B, 155, 1009
+X, Client 17, Token 84
+O, Client 32, Orderbook 16, Token 113, B, 370, 1026
+O, Client 30, Orderbook 11, Token 114, B, 585, 1036
+X, Client 19, Token 80
+O, Client 19, Orderbook 16, Token 115, S, 400, 972
+O, Client 29, Orderbook 19, Token 116, S, 620, 956
+X, Client 10, Token 67
+O, Client 30, Orderbook 7, Token 117, S, 165, 957
+X, Client 31, Token 53
+X, Client 21, Token 73
+O, Client 29, Orderbook 1, Token 118, S, 775, 985
+O, Client 18, Orderbook 10, Token 119, S, 690, 958
+X, Client 33, Token 111
+O, Client 21, Orderbook 13, Token 120, B, 510, 1040
+O, Client 27, Orderbook 20, Token 121, S, 205, 981
+O, Client 7, Orderbook 14, Token 122, S, 270, 952
+O, Client 40, Orderbook 1, Token 123, B, 750, 1028
+O, Client 15, Orderbook 19, Token 124, S, 175, 969
+X, Client 4, Token 87
+O, Client 6, Orderbook 18, Token 125, S, 960, 960
+X, Client 6, Token 125
+O, Client 20, Orderbook 6, Token 126, B, 570, 1010
+O, Client 18, Orderbook 11, Token 127, S, 960, 998
+O, Client 40, Orderbook 1, Token 128, B, 465, 1040
+O, Client 28, Orderbook 20, Token 129, S, 590, 962
+O, Client 15, Orderbook 20, Token 130, B, 155, 1016
+O, Client 25, Orderbook 8, Token 131, B, 530, 1026
+O, Client 30, Orderbook 15, Token 132, S, 700, 988
+X, Client 7, Token 122
+O, Client 17, Orderbook 12, Token 133, S, 735, 968
+O, Client 14, Orderbook 14, Token 134, B, 775, 1034
+O, Client 29, Orderbook 18, Token 135, B, 735, 1047
+O, Client 3, Orderbook 13, Token 136, S, 470, 983
+O, Client 18, Orderbook 11, Token 137, S, 945, 952
+X, Client 9, Token 90
+O, Client 21, Orderbook 11, Token 138, B, 145, 1013
+O, Client 17, Orderbook 4, Token 139, S, 180, 978
+O, Client 39, Orderbook 3, Token 140, S, 285, 992
+O, Client 31, Orderbook 13, Token 141, B, 510, 1019
+X, Client 18, Token 137
+X, Client 37, Token 59
+O, Client 37, Orderbook 5, Token 142, S, 540, 990
+X, Client 30, Token 117
+O, Client 17, Orderbook 3, Token 143, S, 545, 961
+O, Client 15, Orderbook 20, Token 144, B, 690, 1011
+O, Client 38, Orderbook 3, Token 145, S, 930, 995
+X, Client 7, Token 100
+X, Client 29, Token 135
+O, Client 16, Orderbook 11, Token 146, B, 645, 1024
+O, Client 37, Orderbook 5, Token 147, S, 30, 966
+O, Client 3, Orderbook 10, Token 148, B, 735, 1018
+X, Client 18, Token 47
+O, Client 13, Orderbook 16, Token 149, S, 950, 987
+X, Client 22, Token 99
+O, Client 14, Orderbook 14, Token 150, S, 435, 997
+X, Client 2, Token 94
+O, Client 9, Orderbook 3, Token 151, B, 95, 1014
+X, Client 21, Token 138
+X, Client 3, Token 148
+O, Client 15, Orderbook 3, Token 152, S, 785, 992
+X, Client 27, Token 44
+O, Client 18, Orderbook 18, Token 153, B, 70, 1011
+O, Client 13, Orderbook 7, Token 154, S, 230, 958
+O, Client 11, Orderbook 12, Token 155, S, 895, 992
+O, Client 19, Orderbook 2, Token 156, B, 410, 1041
+O, Client 13, Orderbook 4, Token 157, B, 735, 1029
+O, Client 21, Orderbook 11, Token 158, S, 870, 951
+O, Client 40, Orderbook 16, Token 159, B, 355, 1028
+O, Client 17, Orderbook 12, Token 160, S, 615, 964
+O, Client 39, Orderbook 2, Token 161, S, 115, 972
+X, Client 19, Token 85
+O, Client 12, Orderbook 16, Token 162, S, 50, 1000
+O, Client 2, Orderbook 6, Token 163, S, 940, 950
+O, Client 19, Orderbook 17, Token 164, B, 605, 1042
+O, Client 17, Orderbook 19, Token 165, S, 480, 989
+O, Client 38, Orderbook 5, Token 166, S, 730, 954
+X, Client 16, Token 146
+X, Client 38, Token 25
+O, Client 14, Orderbook 8, Token 167, S, 375, 973
+O, Client 35, Orderbook 2, Token 168, S, 895, 960
+O, Client 4, Orderbook 20, Token 169, S, 845, 964
+X, Client 4, Token 112
+X, Client 13, Token 49
+X, Client 31, Token 141
+O, Client 35, Orderbook 3, Token 170, B, 900, 1049
+O, Client 33, Orderbook 1, Token 171, B, 700, 1022
+O, Client 40, Orderbook 7, Token 172, S, 860, 985
+X, Client 34, Token 107
+O, Client 2, Orderbook 3, Token 173, B, 840, 1031
+O, Client 5, Orderbook 17, Token 174, B, 90, 1038
+O, Client 34, Orderbook 14, Token 175, S, 800, 954
+O, Client 9, Orderbook 3, Token 176, S, 590, 971
+O, Client 25, Orderbook 10, Token 177, B, 225, 1031
+O, Client 9, Orderbook 15, Token 178, B, 110, 1012
+O, Client 12, Orderbook 10, Token 179, S, 800, 980
+X, Client 20, Token 19
+X, Client 39, Token 54
+X, Client 40, Token 128
+O, Client 1, Orderbook 19, Token 180, B, 380, 1034
+X, Client 34, Token 72
+X, Client 3, Token 63
+O, Client 7, Orderbook 15, Token 181, S, 275, 969
+O, Client 25, Orderbook 8, Token 182, S, 145, 953
+X, Client 25, Token 182
+X, Client 17, Token 133
+O, Client 15, Orderbook 5, Token 183, S, 385, 975
+O, Client 14, Orderbook 13, Token 184, S, 940, 1000
+O, Client 17, Orderbook 9, Token 185, S, 530, 964
+O, Client 33, Orderbook 16, Token 186, S, 515, 955
+X, Client 8, Token 98
+O, Client 29, Orderbook 1, Token 187, S, 310, 996
+O, Client 3, Orderbook 13, Token 188, B, 805, 1015
+O, Client 11, Orderbook 12, Token 189, B, 775, 1022
+O, Client 30, Orderbook 14, Token 190, B, 135, 1031
+O, Client 36, Orderbook 9, Token 191, S, 65, 978
+O, Client 13, Orderbook 2, Token 192, B, 915, 1000
+O, Client 38, Orderbook 4, Token 193, S, 850, 974
+O, Client 26, Orderbook 16, Token 194, B, 950, 1006
+O, Client 40, Orderbook 12, Token 195, B, 360, 1014
+O, Client 21, Orderbook 5, Token 196, B, 515, 1045
+O, Client 15, Orderbook 2, Token 197, B, 540, 1031
+O, Client 25, Orderbook 13, Token 198, S, 230, 965
+O, Client 29, Orderbook 4, Token 199, B, 900, 1041
+O, Client 2, Orderbook 13, Token 200, B, 380, 1013
+O, Client 22, Orderbook 8, Token 201, B, 510, 1048
+X, Client 14, Token 134
+X, Client 35, Token 170
+O, Client 12, Orderbook 3, Token 202, B, 190, 1045
+X, Client 3, Token 136
+X, Client 30, Token 114
+X, Client 24, Token 21
+O, Client 3, Orderbook 10, Token 203, B, 250, 1009
+O, Client 38, Orderbook 5, Token 204, S, 170, 980
+O, Client 29, Orderbook 7, Token 205, B, 215, 1023
+O, Client 20, Orderbook 2, Token 206, B, 85, 1046
+X, Client 39, Token 161
+O, Client 28, Orderbook 7, Token 207, S, 190, 993
+X, Client 11, Token 189
+O, Client 5, Orderbook 5, Token 208, B, 970, 1018
+O, Client 15, Orderbook 11, Token 209, S, 710, 997
+O, Client 7, Orderbook 19, Token 210, S, 480, 968
+O, Client 36, Orderbook 20, Token 211, B, 260, 1011
+O, Client 4, Orderbook 17, Token 212, S, 935, 973
+O, Client 33, Orderbook 20, Token 213, S, 650, 953
+O, Client 29, Orderbook 11, Token 214, B, 340, 1035
+X, Client 15, Token 183
+X, Client 29, Token 118
+X, Client 16, Token 55
+O, Client 22, Orderbook 9, Token 215, B, 925, 1021
+O, Client 17, Orderbook 10, Token 216, B, 305, 1005
+O, Client 12, Orderbook 12, Token 217, B, 695, 1050
+O, Client 21, Orderbook 3, Token 218, S, 685, 978
+O, Client 32, Orderbook 10, Token 219, B, 30, 1012
+O, Client 12, Orderbook 11, Token 220, S, 305, 989
+O, Client 18, Orderbook 5, Token 221, S, 245, 991
+O, Client 17, Orderbook 18, Token 222, B, 275, 1032
+O, Client 33, Orderbook 15, Token 223, S, 655, 973
+O, Client 20, Orderbook 6, Token 224, S, 535, 991
+X, Client 13, Token 149
+X, Client 22, Token 215
+O, Client 35, Orderbook 8, Token 225, S, 310, 955
+O, Client 27, Orderbook 12, Token 226, B, 425, 1036
+O, Client 18, Orderbook 7, Token 227, S, 120, 983
+O, Client 8, Orderbook 2, Token 228, B, 950, 1001
+O, Client 37, Orderbook 20, Token 229, B, 440, 1010
+X, Client 9, Token 176
+X, Client 37, Token 102
+O, Client 28, Orderbook 18, Token 230, S, 220, 984
+O, Client 2, Orderbook 14, Token 231, S, 420, 999
+O, Client 3, Orderbook 18, Token 232, B, 360, 1013
+O, Client 22, Orderbook 19, Token 233, S, 10, 965
+O, Client 18, Orderbook 16, Token 234, B, 815, 1044
+O, Client 28, Orderbook 20, Token 235, B, 720, 1009
+O, Client 11, Orderbook 4, Token 236, B, 470, 1025
+O, Client 19, Orderbook 11, Token 237, B, 190, 1048
+O, Client 6, Orderbook 10, Token 238, B, 835, 1009
+X, Client 38, Token 145
+X, Client 18, Token 127
+X, Client 37, Token 29
+O, Client 20, Orderbook 2, Token 239, S, 925, 968
+O, Client 5, Orderbook 3, Token 240, B, 80, 1040
+X, Client 21, Token 110
+O, Client 33, Orderbook 9, Token 241, S, 415, 966
+O, Client 23, Orderbook 16, Token 242, B, 785, 1009
+X, Client 2, Token 163
+O, Client 40, Orderbook 18, Token 243, S, 110, 953
+X, Client 5, Token 174
+X, Client 1, Token 60
+O, Client 12, Orderbook 6, Token 244, S, 235, 966
+O, Client 11, Orderbook 5, Token 245, S, 515, 989
+X, Client 38, Token 93
+O, Client 12, Orderbook 4, Token 246, S, 185, 988
+O, Client 11, Orderbook 15, Token 247, S, 540, 998
+O, Client 13, Orderbook 5, Token 248, S, 95, 982
+X, Client 3, Token 203
+O, Client 12, Orderbook 8, Token 249, B, 490, 1037
+X, Client 3, Token 232
+X, Client 5, Token 208
+O, Client 38, Orderbook 16, Token 250, S, 725, 997
+X, Client 14, Token 150
+O, Client 23, Orderbook 14, Token 251, S, 795, 994
+O, Client 36, Orderbook 20, Token 252, S, 55, 962
+O, Client 22, Orderbook 6, Token 253, S, 485, 959
+O, Client 20, Orderbook 20, Token 254, B, 255, 1007
+O, Client 20, Orderbook 9, Token 255, S, 370, 970
+O, Client 20, Orderbook 12, Token 256, S, 45, 974
+O, Client 24, Orderbook 3, Token 257, B, 305, 1001
+X, Client 12, Token 246
+O, Client 4, Orderbook 10, Token 258, B, 125, 1039
+O, Client 10, Orderbook 5, Token 259, S, 795, 956
+X, Client 12, Token 217
+O, Client 39, Orderbook 14, Token 260, S, 515, 992
+O, Client 9, Orderbook 6, Token 261, B, 845, 1010
+O, Client 14, Orderbook 18, Token 262, B, 615, 1004
+O, Client 21, Orderbook 5, Token 263, S, 130, 970
+O, Client 12, Orderbook 12, Token 264, S, 15, 956
+O, Client 8, Orderbook 16, Token 265, B, 55, 1034
+X, Client 13, Token 40
+O, Client 26, Orderbook 15, Token 266, B, 710, 1024
+O, Client 11, Orderbook 18, Token 267, S, 645, 993
+X, Client 15, Token 95
+X, Client 35, Token 62
+X, Client 11, Token 267
+O, Client 5, Orderbook 18, Token 268, S, 85, 990
+O, Client 33, Orderbook 9, Token 269, S, 290, 980
+O, Client 32, Orderbook 16, Token 270, S, 285, 993
+X, Client 40, Token 159
+X, Client 4, Token 212
+O, Client 30, Orderbook 1, Token 271, B, 990, 1047
+O, Client 31, Orderbook 9, Token 272, B, 395, 1035
+O, Client 14, Orderbook 8, Token 273, B, 310, 1042
+O, Client 33, Orderbook 20, Token 274, B, 600, 1013
+X, Client 19, Token 237
+X, Client 21, Token 218
+O, Client 24, Orderbook 19, Token 275, S, 625, 982
+X, Client 13, Token 248
+O, Client 37, Orderbook 1, Token 276, S, 225, 954
+O, Client 24, Orderbook 9, Token 277, S, 975, 971
+O, Client 8, Orderbook 14, Token 278, S, 565, 966
+X, Client 24, Token 275
+X, Client 27, Token 226
+O, Client 9, Orderbook 5, Token 279, S, 385, 1000
+O, Client 31, Orderbook 18, Token 280, S, 440, 988
+O, Client 26, Orderbook 9, Token 281, B, 390, 1045
+O, Client 28, Orderbook 6, Token 282, S, 360, 966
+X, Client 30, Token 190
+O, Client 28, Orderbook 8, Token 283, S, 625, 953
+X, Client 26, Token 11
+O, Client 14, Orderbook 2, Token 284, B, 130, 1032
+O, Client 37, Orderbook 13, Token 285, S, 155, 960
+X, Client 9, Token 261
+O, Client 19, Orderbook 11, Token 286, B, 725, 1017
+O, Client 20, Orderbook 8, Token 287, B, 700, 1005
+X, Client 12, Token 244
+O, Client 7, Orderbook 12, Token 288, B, 730, 1016
+X, Client 37, Token 229
+X, Client 32, Token 219
+O, Client 20, Orderbook 16, Token 289, B, 440, 1020
+O, Client 22, Orderbook 7, Token 290, B, 30, 1032
+O, Client 18, Orderbook 9, Token 291, S, 590, 982
+O, Client 33, Orderbook 5, Token 292, S, 210, 972
+X, Client 30, Token 132
+O, Client 4, Orderbook 12, Token 293, S, 750, 987
+O, Client 30, Orderbook 6, Token 294, B, 910, 1042
+O, Client 22, Orderbook 14, Token 295, B, 875, 1008
+O, Client 29, Orderbook 14, Token 296, B, 745, 1046
+O, Client 21, Orderbook 13, Token 297, S, 255, 959
+O, Client 23, Orderbook 20, Token 298, B, 470, 1001
+O, Client 20, Orderbook 10, Token 299, S, 490, 986
+X, Client 36, Token 191
+X, Client 13, Token 157
+O, Client 30, Orderbook 20, Token 300, B, 985, 1027
+O, Client 23, Orderbook 17, Token 301, S, 480, 953
+O, Client 16, Orderbook 6, Token 302, S, 840, 971
+O, Client 3, Orderbook 12, Token 303, B, 275, 1047
+X, Client 28, Token 283
+O, Client 23, Orderbook 10, Token 304, B, 465, 1034
+X, Client 24, Token 277
+X, Client 17, Token 216
+O, Client 27, Orderbook 2, Token 305, B, 610, 1008
+X, Client 12, Token 162
+O, Client 38, Orderbook 5, Token 306, S, 960, 978
+O, Client 39, Orderbook 4, Token 307, S, 395, 996
+O, Client 37, Orderbook 12, Token 308, B, 315, 1013
+O, Client 31, Orderbook 17, Token 309, B, 450, 1035
+O, Client 33, Orderbook 14, Token 310, B, 365, 1035
+X, Client 33, Token 310
+X, Client 2, Token 88
+O, Client 35, Orderbook 13, Token 311, S, 315, 993
+O, Client 18, Orderbook 8, Token 312, S, 75, 984
+X, Client 33, Token 292
+O, Client 6, Orderbook 9, Token 313, B, 950, 1030
+X, Client 22, Token 71
+X, Client 13, Token 192
+O, Client 29, Orderbook 12, Token 314, S, 290, 974
+O, Client 6, Orderbook 18, Token 315, B, 795, 1039
+X, Client 6, Token 313
+O, Client 26, Orderbook 14, Token 316, S, 565, 995
+O, Client 30, Orderbook 16, Token 317, S, 505, 971
+O, Client 29, Orderbook 11, Token 318, S, 115, 983
+O, Client 38, Orderbook 4, Token 319, S, 140, 958
+O, Client 1, Orderbook 13, Token 320, S, 730, 997
+X, Client 29, Token 64
+O, Client 15, Orderbook 1, Token 321, S, 310, 987
+O, Client 10, Orderbook 12, Token 322, S, 770, 963
+O, Client 37, Orderbook 11, Token 323, B, 685, 1038
+O, Client 29, Orderbook 1, Token 324, S, 35, 961
+O, Client 6, Orderbook 5, Token 325, S, 545, 958
+O, Client 6, Orderbook 9, Token 326, S, 750, 953
+O, Client 13, Orderbook 18, Token 327, B, 180, 1035
+X, Client 1, Token 92
+X, Client 9, Token 151
+O, Client 3, Orderbook 8, Token 328, B, 505, 1022
+X, Client 7, Token 181
+O, Client 31, Orderbook 4, Token 329, S, 350, 963
+X, Client 17, Token 139
+O, Client 19, Orderbook 14, Token 330, S, 995, 951
+O, Client 21, Orderbook 17, Token 331, S, 680, 958
+O, Client 22, Orderbook 14, Token 332, S, 415, 980
+X, Client 17, Token 165
+O, Client 20, Orderbook 3, Token 333, B, 55, 1041
+O, Client 23, Orderbook 10, Token 334, S, 260, 987
+O, Client 17, Orderbook 3, Token 335, S, 610, 978
+O, Client 17, Orderbook 12, Token 336, B, 160, 1013
+O, Client 14, Orderbook 20, Token 337, S, 1000, 987
+O, Client 17, Orderbook 5, Token 338, B, 405, 1005
+O, Client 11, Orderbook 5, Token 339, B, 550, 1011
+O, Client 31, Orderbook 12, Token 340, B, 625, 1028
+O, Client 5, Orderbook 20, Token 341, S, 715, 959
+O, Client 21, Orderbook 8, Token 342, S, 845, 971
+O, Client 11, Orderbook 4, Token 343, B, 600, 1019
+O, Client 19, Orderbook 12, Token 344, B, 20, 1050
+O, Client 23, Orderbook 13, Token 345, B, 345, 1041
+O, Client 2, Orderbook 2, Token 346, B, 685, 1037
+O, Client 15, Orderbook 16, Token 347, B, 960, 1001
+O, Client 26, Orderbook 14, Token 348, S, 895, 974
+O, Client 36, Orderbook 17, Token 349, S, 535, 970
+O, Client 2, Orderbook 20, Token 350, S, 910, 970
+X, Client 6, Token 86
+X, Client 22, Token 253
+O, Client 14, Orderbook 1, Token 351, S, 365, 990
+X, Client 18, Token 227
+X, Client 36, Token 211
+O, Client 26, Orderbook 18, Token 352, B, 905, 1004
+O, Client 13, Orderbook 20, Token 353, S, 45, 975
+O, Client 20, Orderbook 12, Token 354, S, 1000, 965
+X, Client 23, Token 304
+O, Client 25, Orderbook 13, Token 355, B, 530, 1032
+O, Client 33, Orderbook 17, Token 356, S, 245, 956
+O, Client 1, Orderbook 19, Token 357, B, 630, 1013
+O, Client 22, Orderbook 8, Token 358, B, 540, 1007
+O, Client 28, Orderbook 11, Token 359, S, 865, 993
+X, Client 35, Token 311
+X, Client 32, Token 270
+X, Client 18, Token 234
+O, Client 13, Orderbook 11, Token 360, S, 280, 961
+O, Client 15, Orderbook 16, Token 361, S, 590, 988
+O, Client 18, Orderbook 6, Token 362, S, 675, 983
+X, Client 21, Token 342
+X, Client 21, Token 331
+O, Client 14, Orderbook 12, Token 363, B, 515, 1003
+X, Client 37, Token 66
+X, Client 18, Token 221
+X, Client 3, Token 328
+X, Client 28, Token 207
+O, Client 6, Orderbook 20, Token 364, S, 225, 1000
+O, Client 30, Orderbook 8, Token 365, B, 40, 1011
+O, Client 25, Orderbook 19, Token 366, B, 190, 1035
+O, Client 30, Orderbook 8, Token 367, S, 235, 964
+O, Client 30, Orderbook 15, Token 368, B, 310, 1047
+X, Client 17, Token 97
+X, Client 32, Token 83
+X, Client 25, Token 105
+X, Client 20, Token 254
+O, Client 31, Orderbook 11, Token 369, B, 470, 1044
+O, Client 39, Orderbook 15, Token 370, S, 550, 978
+O, Client 7, Orderbook 4, Token 371, B, 830, 1050
+O, Client 20, Orderbook 18, Token 372, S, 535, 950
+X, Client 38, Token 250
+X, Client 23, Token 345
+X, Client 2, Token 200
+O, Client 32, Orderbook 9, Token 373, S, 265, 994
+X, Client 2, Token 173
+X, Client 21, Token 158
+O, Client 2, Orderbook 15, Token 374, B, 665, 1010
+O, Client 21, Orderbook 4, Token 375, B, 515, 1020
+O, Client 12, Orderbook 11, Token 376, B, 870, 1011
+O, Client 29, Orderbook 14, Token 377, B, 20, 1013
+X, Client 33, Token 171
+O, Client 10, Orderbook 18, Token 378, B, 695, 1013
+O, Client 34, Orderbook 13, Token 379, B, 865, 1029
+O, Client 25, Orderbook 15, Token 380, S, 230, 987
+X, Client 19, Token 33
+O, Client 31, Orderbook 7, Token 381, S, 80, 990
+O, Client 26, Orderbook 13, Token 382, B, 875, 1016
+O, Client 40, Orderbook 8, Token 383, B, 55, 1040
+O, Client 6, Orderbook 6, Token 384, S, 385, 974
+X, Client 8, Token 104
+O, Client 34, Orderbook 20, Token 385, S, 140, 981
+X, Client 31, Token 329
+X, Client 25, Token 380
+O, Client 3, Orderbook 1, Token 386, B, 290, 1036
+O, Client 25, Orderbook 9, Token 387, B, 445, 1044
+X, Client 18, Token 119
+O, Client 12, Orderbook 1, Token 388, B, 950, 1026
+O, Client 26, Orderbook 15, Token 389, B, 230, 1013
+X, Client 23, Token 251
+O, Client 12, Orderbook 4, Token 390, B, 740, 1018
+X, Client 15, Token 144
+X, Client 10, Token 378
+X, Client 33, Token 269
+X, Client 14, Token 273
+O, Client 38, Orderbook 4, Token 391, B, 945, 1025
+O, Client 36, Orderbook 14, Token 392, S, 975, 965
+O, Client 11, Orderbook 11, Token 393, B, 675, 1031
+O, Client 21, Orderbook 5, Token 394, B, 325, 1026
+X, Client 26, Token 389
+O, Client 38, Orderbook 16, Token 395, B, 660, 1036
+O, Client 40, Orderbook 5, Token 396, S, 465, 995
+O, Client 15, Orderbook 5, Token 397, S, 725, 989
+X, Client 25, Token 131
+X, Client 36, Token 349
+O, Client 15, Orderbook 1, Token 398, S, 990, 952
+O, Client 8, Orderbook 17, Token 399, B, 160, 1010
+O, Client 36, Orderbook 7, Token 400, B, 440, 1040
+O, Client 31, Orderbook 2, Token 401, S, 920, 988
+O, Client 29, Orderbook 2, Token 402, S, 95, 991
+O, Client 29, Orderbook 9, Token 403, B, 10, 1011
+O, Client 5, Orderbook 4, Token 404, S, 305, 954
+X, Client 28, Token 129
+X, Client 9, Token 178
+O, Client 8, Orderbook 8, Token 405, B, 795, 1003
+O, Client 27, Orderbook 7, Token 406, B, 500, 1042
+X, Client 19, Token 156
+O, Client 37, Orderbook 7, Token 407, B, 950, 1013
+O, Client 11, Orderbook 5, Token 408, S, 230, 962
+X, Client 26, Token 352
+X, Client 39, Token 370
+O, Client 8, Orderbook 16, Token 409, B, 710, 1005
+O, Client 12, Orderbook 17, Token 410, S, 900, 951
+O, Client 9, Orderbook 5, Token 411, S, 555, 1000
+O, Client 30, Orderbook 18, Token 412, B, 690, 1035
+X, Client 38, Token 306
+O, Client 22, Orderbook 4, Token 413, B, 930, 1035
+O, Client 33, Orderbook 4, Token 414, B, 205, 1012
+O, Client 36, Orderbook 1, Token 415, B, 345, 1003
+O, Client 22, Orderbook 20, Token 416, S, 55, 990
+O, Client 39, Orderbook 20, Token 417, S, 965, 961
+O, Client 38, Orderbook 6, Token 418, S, 580, 951
+O, Client 17, Orderbook 2, Token 419, S, 265, 990
+O, Client 37, Orderbook 1, Token 420, B, 685, 1039
+O, Client 1, Orderbook 9, Token 421, B, 290, 1036
+O, Client 33, Orderbook 15, Token 422, S, 285, 957
+O, Client 32, Orderbook 4, Token 423, B, 135, 1018
+X, Client 25, Token 78
+O, Client 4, Orderbook 15, Token 424, B, 770, 1047
+O, Client 7, Orderbook 7, Token 425, B, 990, 1042
+X, Client 27, Token 106
+O, Client 21, Orderbook 20, Token 426, S, 465, 975
+O, Client 10, Orderbook 2, Token 427, S, 405, 954
+O, Client 5, Orderbook 13, Token 428, S, 95, 968
+O, Client 26, Orderbook 1, Token 429, S, 180, 994
+O, Client 19, Orderbook 18, Token 430, B, 195, 1034
+O, Client 13, Orderbook 14, Token 431, B, 160, 1021
+O, Client 29, Orderbook 16, Token 432, B, 420, 1049
+O, Client 39, Orderbook 11, Token 433, S, 355, 988
+O, Client 29, Orderbook 2, Token 434, B, 920, 1009
+O, Client 5, Orderbook 8, Token 435, B, 700, 1019
+O, Client 6, Orderbook 14, Token 436, S, 855, 963
+O, Client 38, Orderbook 11, Token 437, S, 235, 957
+X, Client 29, Token 296
+X, Client 21, Token 263
+O, Client 40, Orderbook 16, Token 438, S, 445, 990
+O, Client 12, Orderbook 13, Token 439, B, 285, 1024
+O, Client 31, Orderbook 1, Token 440, S, 90, 972
+O, Client 36, Orderbook 14, Token 441, B, 470, 1003
+O, Client 13, Orderbook 16, Token 442, B, 990, 1002
+O, Client 4, Orderbook 9, Token 443, S, 125, 1000
+X, Client 11, Token 343
+X, Client 22, Token 358
+X, Client 12, Token 202
+O, Client 28, Orderbook 18, Token 444, B, 625, 1008
+O, Client 34, Orderbook 14, Token 445, S, 200, 972
+O, Client 12, Orderbook 20, Token 446, B, 830, 1038
+X, Client 3, Token 188
+O, Client 5, Orderbook 16, Token 447, B, 355, 1045
+O, Client 12, Orderbook 18, Token 448, B, 915, 1030
+O, Client 5, Orderbook 1, Token 449, S, 335, 994
+O, Client 39, Orderbook 18, Token 450, B, 170, 1034
+X, Client 5, Token 428
+X, Client 14, Token 351
+O, Client 35, Orderbook 5, Token 451, B, 645, 1008
+O, Client 36, Orderbook 19, Token 452, S, 170, 992
+O, Client 35, Orderbook 10, Token 453, B, 480, 1009
+O, Client 34, Orderbook 8, Token 454, B, 790, 1024
+O, Client 15, Orderbook 2, Token 455, B, 560, 1048
+O, Client 21, Orderbook 8, Token 456, B, 435, 1010
+X, Client 2, Token 231
+O, Client 9, Orderbook 19, Token 457, B, 950, 1010
+O, Client 29, Orderbook 20, Token 458, B, 450, 1029
+X, Client 24, Token 257
+O, Client 28, Orderbook 17, Token 459, B, 35, 1019
+X, Client 25, Token 387
+O, Client 26, Orderbook 3, Token 460, S, 390, 984
+X, Client 15, Token 361
+X, Client 1, Token 357
+O, Client 18, Orderbook 17, Token 461, S, 845, 987
+O, Client 17, Orderbook 20, Token 462, S, 415, 962
+X, Client 37, Token 407
+X, Client 17, Token 160
+O, Client 9, Orderbook 12, Token 463, B, 825, 1025
+X, Client 8, Token 265
+X, Client 37, Token 308
+O, Client 10, Orderbook 4, Token 464, B, 965, 1026
+O, Client 37, Orderbook 8, Token 465, S, 450, 972
+O, Client 35, Orderbook 10, Token 466, S, 130, 967
+X, Client 11, Token 408
+O, Client 18, Orderbook 20, Token 467, B, 970, 1001
+X, Client 20, Token 126
+O, Client 14, Orderbook 1, Token 468, S, 310, 969
+X, Client 29, Token 432
+X, Client 17, Token 419
+X, Client 38, Token 391
+O, Client 13, Orderbook 13, Token 469, S, 905, 989
+X, Client 7, Token 210
+O, Client 9, Orderbook 2, Token 470, S, 470, 993
+X, Client 33, Token 422
+O, Client 31, Orderbook 6, Token 471, B, 205, 1019
+O, Client 22, Orderbook 7, Token 472, B, 10, 1036
+O, Client 23, Orderbook 18, Token 473, B, 485, 1019
+X, Client 23, Token 242
+O, Client 34, Orderbook 20, Token 474, B, 225, 1029
+O, Client 12, Orderbook 7, Token 475, S, 650, 995
+O, Client 1, Orderbook 12, Token 476, S, 195, 981
+X, Client 6, Token 384
+O, Client 7, Orderbook 12, Token 477, S, 355, 978
+O, Client 4, Orderbook 11, Token 478, S, 40, 964
+O, Client 26, Orderbook 6, Token 479, B, 745, 1010
+O, Client 21, Orderbook 1, Token 480, B, 415, 1037
+O, Client 23, Orderbook 6, Token 481, B, 670, 1010
+O, Client 35, Orderbook 12, Token 482, B, 125, 1027
+X, Client 9, Token 279
+X, Client 29, Token 116
+O, Client 25, Orderbook 7, Token 483, S, 70, 980
+O, Client 32, Orderbook 1, Token 484, B, 815, 1018
+O, Client 13, Orderbook 5, Token 485, S, 430, 953
+O, Client 18, Orderbook 1, Token 486, B, 840, 1003
+O, Client 7, Orderbook 7, Token 487, B, 85, 1002
+O, Client 30, Orderbook 16, Token 488, B, 505, 1024
+O, Client 20, Orderbook 2, Token 489, S, 805, 967
+O, Client 22, Orderbook 17, Token 490, B, 445, 1013
+O, Client 18, Orderbook 12, Token 491, S, 785, 979
+X, Client 5, Token 435
+O, Client 40, Orderbook 19, Token 492, S, 780, 971
+X, Client 14, Token 284
+O, Client 10, Orderbook 19, Token 493, S, 795, 957
+O, Client 37, Orderbook 17, Token 494, B, 310, 1028
+O, Client 35, Orderbook 19, Token 495, B, 30, 1028
+X, Client 2, Token 34
+O, Client 19, Orderbook 20, Token 496, B, 660, 1030
+O, Client 7, Orderbook 14, Token 497, S, 510, 970
+O, Client 36, Orderbook 1, Token 498, S, 285, 965
+O, Client 39, Orderbook 19, Token 499, B, 515, 1036
+O, Client 20, Orderbook 7, Token 500, S, 660, 976
+X, Client 21, Token 394
+O, Client 1, Orderbook 17, Token 501, B, 885, 1044
+O, Client 27, Orderbook 13, Token 502, S, 490, 951
+O, Client 21, Orderbook 17, Token 503, B, 160, 1043
+O, Client 23, Orderbook 5, Token 504, S, 280, 989
+O, Client 23, Orderbook 7, Token 505, B, 270, 1015
+X, Client 20, Token 255
+O, Client 38, Orderbook 2, Token 506, S, 405, 989
+O, Client 3, Orderbook 1, Token 507, S, 900, 977
+X, Client 28, Token 359
+O, Client 4, Orderbook 6, Token 508, B, 255, 1044
+X, Client 29, Token 205
+X, Client 21, Token 375
+O, Client 29, Orderbook 6, Token 509, S, 975, 970
+O, Client 23, Orderbook 20, Token 510, B, 600, 1044
+O, Client 35, Orderbook 2, Token 511, S, 925, 978
+O, Client 34, Orderbook 11, Token 512, B, 120, 1011
+O, Client 12, Orderbook 5, Token 513, B, 505, 1014
+O, Client 29, Orderbook 10, Token 514, S, 190, 983
+O, Client 10, Orderbook 5, Token 515, B, 935, 1009
+O, Client 14, Orderbook 14, Token 516, S, 330, 959
+X, Client 22, Token 332
+O, Client 29, Orderbook 10, Token 517, B, 315, 1037
+O, Client 17, Orderbook 15, Token 518, B, 845, 1049
+O, Client 8, Orderbook 19, Token 519, S, 615, 963
+O, Client 14, Orderbook 16, Token 520, S, 905, 972
+X, Client 29, Token 324
+X, Client 28, Token 230
+O, Client 13, Orderbook 15, Token 521, S, 50, 968
+O, Client 12, Orderbook 12, Token 522, B, 200, 1029
+O, Client 3, Orderbook 9, Token 523, B, 310, 1040
+O, Client 26, Orderbook 1, Token 524, S, 580, 956
+O, Client 30, Orderbook 2, Token 525, S, 715, 977
+O, Client 5, Orderbook 13, Token 526, B, 575, 1011
+O, Client 4, Orderbook 1, Token 527, S, 255, 984
+X, Client 13, Token 442
+X, Client 10, Token 259
+O, Client 40, Orderbook 4, Token 528, B, 375, 1002
+O, Client 1, Orderbook 12, Token 529, B, 235, 1035
+O, Client 33, Orderbook 12, Token 530, S, 435, 985
+O, Client 33, Orderbook 7, Token 531, S, 55, 951
+O, Client 16, Orderbook 15, Token 532, S, 480, 966
+X, Client 29, Token 514
+O, Client 10, Orderbook 16, Token 533, S, 500, 996
+O, Client 32, Orderbook 16, Token 534, S, 285, 962
+O, Client 12, Orderbook 17, Token 535, B, 195, 1040
+O, Client 32, Orderbook 10, Token 536, B, 890, 1014
+X, Client 13, Token 327
+X, Client 10, Token 493
+X, Client 37, Token 147
+X, Client 3, Token 507
+O, Client 33, Orderbook 19, Token 537, S, 665, 961
+X, Client 5, Token 404
+O, Client 7, Orderbook 4, Token 538, S, 90, 998
+O, Client 29, Orderbook 5, Token 539, S, 885, 971
+X, Client 35, Token 451
+O, Client 18, Orderbook 6, Token 540, B, 995, 1049
+O, Client 36, Orderbook 18, Token 541, S, 665, 994
+O, Client 23, Orderbook 12, Token 542, B, 95, 1036
+X, Client 21, Token 426
+O, Client 29, Orderbook 9, Token 543, B, 200, 1030
+O, Client 10, Orderbook 18, Token 544, S, 575, 967
+O, Client 3, Orderbook 5, Token 545, S, 690, 977
+O, Client 16, Orderbook 4, Token 546, S, 930, 981
+X, Client 12, Token 390
+O, Client 3, Orderbook 3, Token 547, S, 910, 956
+O, Client 14, Orderbook 11, Token 548, S, 700, 966
+O, Client 32, Orderbook 14, Token 549, S, 255, 997
+X, Client 29, Token 458
+O, Client 14, Orderbook 3, Token 550, S, 625, 993
+O, Client 22, Orderbook 20, Token 551, S, 955, 990
+O, Client 9, Orderbook 18, Token 552, S, 925, 986
+O, Client 14, Orderbook 16, Token 553, B, 230, 1003
+O, Client 26, Orderbook 11, Token 554, B, 430, 1040
+X, Client 29, Token 318
+O, Client 14, Orderbook 1, Token 555, S, 800, 961
+X, Client 34, Token 445
+O, Client 37, Orderbook 11, Token 556, S, 750, 962
+O, Client 37, Orderbook 19, Token 557, B, 500, 1031
+O, Client 23, Orderbook 14, Token 558, B, 830, 1026
+O, Client 27, Orderbook 16, Token 559, B, 535, 1018
+O, Client 37, Orderbook 16, Token 560, S, 565, 978
+O, Client 16, Orderbook 8, Token 561, S, 205, 961
+O, Client 21, Orderbook 2, Token 562, B, 140, 1022
+O, Client 15, Orderbook 7, Token 563, S, 695, 986
+O, Client 31, Orderbook 5, Token 564, S, 315, 995
+O, Client 29, Orderbook 1, Token 565, S, 975, 958
+X, Client 28, Token 444
+O, Client 18, Orderbook 5, Token 566, B, 580, 1010
+X, Client 35, Token 225
+X, Client 7, Token 497
+O, Client 12, Orderbook 20, Token 567, S, 105, 978
+X, Client 4, Token 169
+O, Client 12, Orderbook 13, Token 568, B, 950, 1009
+O, Client 40, Orderbook 17, Token 569, S, 10, 975
+X, Client 12, Token 448
+O, Client 3, Orderbook 12, Token 570, S, 410, 975
+X, Client 18, Token 312
+X, Client 3, Token 386
+X, Client 29, Token 543
+O, Client 13, Orderbook 5, Token 571, B, 145, 1015
+O, Client 1, Orderbook 13, Token 572, S, 205, 984
+X, Client 33, Token 537
+O, Client 40, Orderbook 2, Token 573, B, 610, 1018
+X, Client 12, Token 567
+X, Client 23, Token 505
+O, Client 33, Orderbook 16, Token 574, B, 570, 1018
+X, Client 17, Token 338
+O, Client 8, Orderbook 8, Token 575, S, 265, 958
+X, Client 15, Token 130
+O, Client 34, Orderbook 7, Token 576, B, 805, 1026
+O, Client 10, Orderbook 2, Token 577, S, 110, 967
+O, Client 40, Orderbook 10, Token 578, B, 965, 1024
+X, Client 20, Token 224
+O, Client 37, Orderbook 4, Token 579, S, 170, 953
+O, Client 16, Orderbook 19, Token 580, B, 560, 1043
+O, Client 22, Orderbook 14, Token 581, B, 700, 1036
+O, Client 3, Orderbook 15, Token 582, S, 390, 985
+O, Client 24, Orderbook 16, Token 583, S, 800, 987
+O, Client 4, Orderbook 5, Token 584, B, 975, 1039
+O, Client 39, Orderbook 15, Token 585, S, 25, 986
+X, Client 19, Token 286
+O, Client 18, Orderbook 3, Token 586, B, 600, 1014
+O, Client 2, Orderbook 16, Token 587, S, 295, 970
+O, Client 18, Orderbook 19, Token 588, S, 330, 955
+O, Client 8, Orderbook 11, Token 589, B, 845, 1002
+O, Client 35, Orderbook 13, Token 590, S, 375, 969
+O, Client 40, Orderbook 20, Token 591, B, 735, 1022
+X, Client 29, Token 199
+O, Client 13, Orderbook 9, Token 592, S, 970, 989
+O, Client 32, Orderbook 1, Token 593, B, 420, 1016
+O, Client 22, Orderbook 2, Token 594, S, 900, 976
+X, Client 3, Token 109
+X, Client 2, Token 374
+O, Client 22, Orderbook 4, Token 595, B, 245, 1040
+X, Client 1, Token 476
+X, Client 10, Token 322
+O, Client 18, Orderbook 11, Token 596, B, 270, 1049
+O, Client 20, Orderbook 4, Token 597, S, 425, 980
+O, Client 2, Orderbook 2, Token 598, B, 195, 1036
+O, Client 11, Orderbook 15, Token 599, S, 115, 997
+X, Client 30, Token 367
+X, Client 28, Token 282
+O, Client 20, Orderbook 20, Token 600, B, 955, 1008
+X, Client 11, Token 393
+X, Client 40, Token 492
+O, Client 3, Orderbook 19, Token 601, B, 155, 1009
+O, Client 11, Orderbook 13, Token 602, S, 575, 982
+X, Client 33, Token 574
+O, Client 32, Orderbook 4, Token 603, S, 510, 978
+X, Client 18, Token 491
+O, Client 31, Orderbook 15, Token 604, B, 950, 1047
+X, Client 18, Token 362
+O, Client 38, Orderbook 16, Token 605, S, 575, 966
+O, Client 26, Orderbook 4, Token 606, S, 985, 956
+O, Client 34, Orderbook 20, Token 607, B, 225, 1041
+O, Client 35, Orderbook 14, Token 608, B, 130, 1045
+O, Client 22, Orderbook 17, Token 609, S, 220, 981
+O, Client 7, Orderbook 20, Token 610, B, 745, 1007
+O, Client 31, Orderbook 7, Token 611, S, 430, 973
+O, Client 25, Orderbook 3, Token 612, B, 495, 1002
+O, Client 38, Orderbook 13, Token 613, B, 210, 1039
+X, Client 32, Token 484
+O, Client 1, Orderbook 15, Token 614, B, 375, 1034
+O, Client 20, Orderbook 3, Token 615, B, 160, 1015
+O, Client 22, Orderbook 11, Token 616, B, 865, 1006
+O, Client 9, Orderbook 15, Token 617, S, 470, 979
+O, Client 23, Orderbook 4, Token 618, S, 305, 997
+X, Client 33, Token 223
+O, Client 37, Orderbook 6, Token 619, S, 5, 988
+O, Client 35, Orderbook 18, Token 620, S, 790, 955
+X, Client 33, Token 531
+X, Client 13, Token 485
+X, Client 36, Token 392
+O, Client 8, Orderbook 16, Token 621, B, 940, 1043
+O, Client 24, Orderbook 20, Token 622, S, 195, 985
+O, Client 36, Orderbook 8, Token 623, B, 565, 1041
+O, Client 29, Orderbook 1, Token 624, S, 845, 966
+O, Client 4, Orderbook 2, Token 625, B, 990, 1031
+O, Client 2, Orderbook 18, Token 626, B, 80, 1003
+O, Client 29, Orderbook 15, Token 627, B, 370, 1006
+O, Client 2, Orderbook 20, Token 628, B, 210, 1050
+O, Client 19, Orderbook 6, Token 629, S, 290, 981
+O, Client 22, Orderbook 16, Token 630, S, 165, 984
+O, Client 6, Orderbook 9, Token 631, S, 965, 969
+O, Client 4, Orderbook 19, Token 632, S, 835, 985
+O, Client 36, Orderbook 13, Token 633, B, 200, 1020
+O, Client 3, Orderbook 17, Token 634, B, 40, 1027
+X, Client 38, Token 193
+O, Client 17, Orderbook 4, Token 635, S, 385, 960
+O, Client 32, Orderbook 10, Token 636, S, 225, 1000
+O, Client 10, Orderbook 14, Token 637, B, 200, 1032
+X, Client 36, Token 400
+X, Client 37, Token 285
+X, Client 32, Token 534
+O, Client 23, Orderbook 17, Token 638, B, 250, 1002
+O, Client 32, Orderbook 12, Token 639, S, 355, 991
+O, Client 7, Orderbook 4, Token 640, S, 875, 957
+O, Client 21, Orderbook 17, Token 641, S, 400, 961
+O, Client 35, Orderbook 8, Token 642, B, 685, 1009
+O, Client 8, Orderbook 4, Token 643, B, 975, 1012
+O, Client 28, Orderbook 5, Token 644, S, 5, 1000
+X, Client 20, Token 287
+O, Client 30, Orderbook 18, Token 645, B, 510, 1023
+O, Client 10, Orderbook 11, Token 646, B, 690, 1030
+O, Client 19, Orderbook 3, Token 647, B, 200, 1017
+O, Client 40, Orderbook 15, Token 648, S, 720, 991
+X, Client 38, Token 605
+O, Client 29, Orderbook 3, Token 649, S, 175, 970
+O, Client 14, Orderbook 11, Token 650, B, 930, 1005
+O, Client 19, Orderbook 13, Token 651, S, 615, 995
+X, Client 12, Token 376
+O, Client 13, Orderbook 11, Token 652, S, 10, 994
+O, Client 13, Orderbook 15, Token 653, S, 140, 992
+O, Client 6, Orderbook 4, Token 654, S, 870, 965
+O, Client 39, Orderbook 5, Token 655, S, 280, 998
+O, Client 36, Orderbook 19, Token 656, B, 495, 1026
+O, Client 12, Orderbook 10, Token 657, S, 315, 950
+O, Client 26, Orderbook 8, Token 658, S, 850, 979
+X, Client 24, Token 622
+X, Client 5, Token 449
+O, Client 19, Orderbook 13, Token 659, B, 155, 1002
+O, Client 35, Orderbook 19, Token 660, B, 760, 1003
+O, Client 40, Orderbook 9, Token 661, S, 610, 964
+O, Client 14, Orderbook 11, Token 662, S, 745, 956
+O, Client 25, Orderbook 9, Token 663, B, 30, 1039
+X, Client 10, Token 533
+O, Client 22, Orderbook 12, Token 664, S, 965, 950
+O, Client 4, Orderbook 20, Token 665, B, 495, 1028
+O, Client 5, Orderbook 18, Token 666, S, 70, 989
+O, Client 29, Orderbook 5, Token 667, S, 720, 972
+X, Client 9, Token 617
+O, Client 26, Orderbook 12, Token 668, S, 840, 975
+O, Client 31, Orderbook 17, Token 669, S, 305, 968
+O, Client 9, Orderbook 14, Token 670, B, 875, 1025
+X, Client 2, Token 350
+X, Client 3, Token 582
+X, Client 1, Token 614
+X, Client 14, Token 550
+X, Client 40, Token 396
+X, Client 30, Token 271
+X, Client 12, Token 264
+O, Client 10, Orderbook 15, Token 671, B, 275, 1005
+O, Client 3, Orderbook 18, Token 672, B, 870, 1033
+O, Client 24, Orderbook 18, Token 673, B, 460, 1033
+O, Client 17, Orderbook 19, Token 674, B, 905, 1007
+O, Client 12, Orderbook 10, Token 675, S, 75, 959
+O, Client 35, Orderbook 19, Token 676, B, 785, 1012
+O, Client 12, Orderbook 13, Token 677, B, 505, 1005
+O, Client 32, Orderbook 3, Token 678, B, 90, 1047
+X, Client 2, Token 598
+O, Client 19, Orderbook 12, Token 679, S, 655, 978
+O, Client 1, Orderbook 17, Token 680, B, 385, 1021
+O, Client 33, Orderbook 11, Token 681, S, 790, 958
+O, Client 15, Orderbook 3, Token 682, B, 735, 1002
+O, Client 12, Orderbook 17, Token 683, B, 700, 1000
+O, Client 34, Orderbook 18, Token 684, S, 945, 958
+O, Client 24, Orderbook 15, Token 685, S, 975, 962
+O, Client 13, Orderbook 5, Token 686, S, 330, 988
+O, Client 34, Orderbook 17, Token 687, B, 550, 1041
+O, Client 5, Orderbook 4, Token 688, B, 350, 1005
+O, Client 28, Orderbook 9, Token 689, B, 920, 1014
+X, Client 40, Token 661
+O, Client 10, Orderbook 8, Token 690, S, 495, 993
+O, Client 20, Orderbook 2, Token 691, S, 960, 980
+X, Client 14, Token 363
+O, Client 7, Orderbook 8, Token 692, S, 620, 998
+O, Client 20, Orderbook 17, Token 693, S, 605, 967
+O, Client 19, Orderbook 3, Token 694, B, 380, 1022
+X, Client 7, Token 692
+X, Client 29, Token 627
