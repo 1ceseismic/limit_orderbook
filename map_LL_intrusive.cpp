@@ -30,47 +30,55 @@ both next and prev pointers to allow 'linking' the removed orders neighbours imm
 */
 struct OrderQueue;
 struct Order {
-    int client_id;
-    int book_id;
-    uint32_t token;
-    bool is_buy;
-    uint32_t quantity;
-    int price;
+    int client_id=0;
+    int book_id=0;
+    uint32_t token=0;
+    bool is_buy = false;
+    uint32_t quantity=0;
+    int price=0;
     Order* next = nullptr; 
     Order* prev = nullptr;
     OrderQueue* plvl_q = nullptr;
 };
 
+
 struct OrderPool{
-    std::vector<std::unique_ptr<Order>> mem_block;
-    std::vector<Order*> free_list;
+    std::vector<Order> mem_block;
+    std::vector<uint32_t> free_list;
 
+    Order* get(int idx){
 
-    OrderPool(size_t size) { 
-        mem_block.reserve(size);
+        Order* o = &mem_block[idx];
+        return o;
+        
+    }
+
+    OrderPool(size_t size) {
+        mem_block.resize(size);
         free_list.reserve(size);
-        for (size_t i =0; i<size; ++i){
-            mem_block.push_back(std::make_unique<Order>());
-            free_list.push_back(mem_block.back().get());
+        for (uint32_t i =0; i<size; ++i){
+            free_list.push_back(i);
         }
     }
 
-    Order* allocate(){   //we give the next available order object LIFO
+    Order* allocate(){   //we give the next available order object via LIFO which leverages hot cache 
         if (free_list.empty()) return nullptr;
-        
-        Order* order = free_list.back();
+        uint32_t o_idx = free_list.back();
         free_list.pop_back();
-        return order;
+        Order* o = &mem_block[o_idx];
+        return o;
     }
 
-    void deallocate(Order* o) {free_list.push_back(o);}
+    void deallocate(Order* o) {
+        uint32_t idx = static_cast<uint32_t> (o - mem_block.data());
+        free_list.push_back(idx);
+    }
 };
 
 //an intrusive linked list alternative to let us remove from any index in queue
 struct OrderQueue {
     Order* head = nullptr;
     Order* tail = nullptr;
-
     bool empty() const { return head == nullptr; }
 
     void push_back(Order* o) {
@@ -81,17 +89,6 @@ struct OrderQueue {
         
         tail = o;
         o->plvl_q = this;
-    }
-
-    Order* pop_front(){
-        if (empty()) return nullptr;
-
-        Order* o = head;
-        head = head->next;
-        if (head)  head->prev = nullptr;
-        else tail = nullptr;
-        
-        return o;
     }
 
     void remove_order(Order* o) { //O(1)  for K orders in queue as we have prev pointer
@@ -130,8 +127,7 @@ struct OrderBook {
         if (o->is_buy){
             bids[o->price].push_back(o);
             update_best_bid(); 
-        } 
-        else{
+        } else{
             asks[o->price].push_back(o);
             update_best_ask();   
         } 
@@ -167,49 +163,61 @@ void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& poo
     std::map<int, uint32_t> execs;
 
     auto match_engine = [&](OrderQueue*& best_q) {
-        while (incoming_o->quantity > 0 && best_q != nullptr) { //we check every  available price level to iterate over 
-            OrderQueue* q = best_q;
-            int trade_price = q->head->price;
 
+        while (incoming_o->quantity > 0 && best_q && best_q->head) { 
+            Order* resting_ord = best_q->head; 
+            
+            int trade_price = resting_ord->price;
             bool prices_cross = incoming_o->is_buy ? (incoming_o->price >= trade_price) : (incoming_o->price <= trade_price);
             if (!prices_cross) break;
 
-            while (!q->empty() && incoming_o->quantity > 0) { // actually traverse the level
-                Order* resting_ord = q->head;
+            while (resting_ord && incoming_o->quantity > 0) { // actually traverse the level
+                Order* rest_next = resting_ord->next;
+
+                // if (incoming_o->client_id == resting_ord->client_id){ 
+                //     resting_ord = rest_next; 
+                //     continue; 
+                // }
 
                 uint32_t traded_qty = std::min(incoming_o->quantity, resting_ord->quantity);
                 printf("E, Client %d, Token %u, %u, %d\n", resting_ord->client_id, resting_ord->token, traded_qty, resting_ord->price);
                 
                 execs[trade_price] += traded_qty; 
-
                 incoming_o->quantity -= traded_qty;
                 resting_ord->quantity -= traded_qty;
 
                 if (resting_ord->quantity == 0) {
-                    q->pop_front();
+                    best_q->remove_order(resting_ord); 
                     token_map.erase(resting_ord->token);
                     pool.deallocate(resting_ord);
                 }
+
+                resting_ord = rest_next; 
             }
             
-            if (q->empty()) {
-                if (incoming_o->is_buy) {
-                    asks.erase(trade_price); //we cleanup empty levels
-                    update_best_ask();
-                } else {
+            if (best_q->empty() || (incoming_o->quantity > 0 && resting_ord == nullptr)) {
+                if (incoming_o->is_buy) { 
+                    asks.erase(trade_price); 
+                } else { 
                     bids.erase(trade_price);
+                }
+            }
+            
+            if (incoming_o->quantity > 0) { 
+                if (incoming_o->is_buy) { 
+                    update_best_ask(); 
+                } else { 
                     update_best_bid();
                 }
+            } else {
+                break; 
             }
         }
     };
 
-    if (incoming_o->is_buy) {
-        match_engine(best_ask_q);
-    } else {
-        match_engine(best_bid_q);
-    }
-
+    if (incoming_o->is_buy) match_engine(best_ask_q);
+    else match_engine(best_bid_q);
+    
     for (const auto& entry : execs) {
         printf("E, Client %d, Token %u, %u, %d\n", incoming_o->client_id, incoming_o->token, entry.second, entry.first);
     }
@@ -223,10 +231,9 @@ void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& poo
 }
 
 void OrderBook::cancel(Order* order){
-
     if (!order || !order->plvl_q)  return;
-    OrderQueue* q = order->plvl_q;
 
+    OrderQueue* q = order->plvl_q;
     if (!q) return;
     q->remove_order(order);
 
