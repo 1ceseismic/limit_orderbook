@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <set>
+#include <sstream> 
 
 int parse_int(const std::string_view& sv) {
     int val = 0;
@@ -41,17 +43,9 @@ struct Order {
     OrderQueue* plvl_q = nullptr;
 };
 
-
 struct OrderPool{
     std::vector<Order> mem_block;
     std::vector<uint32_t> free_list;
-
-    Order* get(int idx){
-
-        Order* o = &mem_block[idx];
-        return o;
-        
-    }
 
     OrderPool(size_t size) {
         mem_block.resize(size);
@@ -61,7 +55,7 @@ struct OrderPool{
         }
     }
 
-    Order* allocate(){   //we give the next available order object via LIFO which leverages hot cache 
+    Order* allocate(){   //we receive the next available order object via LIFO which leverages hot cache 
         if (free_list.empty()) return nullptr;
         uint32_t o_idx = free_list.back();
         free_list.pop_back();
@@ -74,6 +68,7 @@ struct OrderPool{
         free_list.push_back(idx);
     }
 };
+
 
 //an intrusive linked list alternative to let us remove from any index in queue
 struct OrderQueue {
@@ -108,33 +103,56 @@ orderbook struct for holding heads for O(1) retrieving est bid & offer
 if lookup miss , we find where to insert new price level per order type
 */
 struct OrderBook {
-
-    std::map<int, OrderQueue, std::greater<int>> bids; //these only exist for the quick lookup of existing levels we can insert into
-    std::map<int, OrderQueue> asks;
-    void match_process (Order*, auto&, OrderPool&);
-    void cancel (Order* o_to_cancel);
+    std::unordered_map<int, OrderQueue> bid_levels;
+    std::set<int, std::greater<int>> bid_prices;
+    std::unordered_map<int, OrderQueue> ask_levels;
+    std::set<int> ask_prices;
     OrderQueue* best_bid_q = nullptr;
     OrderQueue* best_ask_q = nullptr;
 
-    void update_best_bid(){
-        best_bid_q = bids.empty() ? nullptr : &bids.begin()->second;
-    }
-    void update_best_ask(){
-        best_ask_q = asks.empty() ? nullptr : &asks.begin()->second;
-    }
+    void match_process (Order*, auto&, OrderPool&, std::stringstream&);
+    void cancel (Order* o_to_cancel);
+    void update_best_bid();
+    void update_best_ask();
+    void add_to_book(Order* o);
 
-    void add_to_book(Order* o){
-        if (o->is_buy){
-            bids[o->price].push_back(o);
-            update_best_bid(); 
-        } else{
-            asks[o->price].push_back(o);
-            update_best_ask();   
-        } 
-    }
-    const auto& get_bids() const { return bids;}
-    const auto& get_asks() const {return asks;}
+    const std::set<int, std::greater<int>>& get_bid_prices() const { return bid_prices; }
+    const std::set<int>& get_ask_prices() const { return ask_prices; }
+    OrderQueue* get_bid_q(int price) const;
+    OrderQueue* get_ask_q(int price) const;
 };
+
+OrderQueue* OrderBook::get_bid_q(int price) const {
+    auto it = bid_levels.find(price);
+    if (it != bid_levels.end()) return const_cast<OrderQueue*>(&it->second);
+    return nullptr;
+}
+
+OrderQueue* OrderBook::get_ask_q(int price) const {
+    auto it = ask_levels.find(price);
+    if (it != ask_levels.end()) return const_cast<OrderQueue*>(&it->second);
+    return nullptr;
+}
+
+void OrderBook::update_best_bid(){
+    best_bid_q = bid_prices.empty() ? nullptr : &bid_levels[*bid_prices.begin()];
+}
+
+void OrderBook::update_best_ask(){
+    best_ask_q = ask_prices.empty() ? nullptr : &ask_levels[*ask_prices.begin()];
+}
+
+void OrderBook::add_to_book(Order* o){
+    if (o->is_buy){
+        bid_levels[o->price].push_back(o);
+        bid_prices.insert(o->price);
+        update_best_bid(); 
+    } else{
+        ask_levels[o->price].push_back(o);
+        ask_prices.insert(o->price);
+        update_best_ask();   
+    } 
+}
 
 
 
@@ -142,13 +160,14 @@ class simulator {
     std::unordered_map<uint32_t, Order*> token_to_order;
     OrderPool order_pool;
     std::map<int, OrderBook> all_books;
-
+    std::stringstream out_buffer;
 public:
-    simulator( size_t pool_size = 5000) : order_pool(pool_size) {};
+    simulator( size_t pool_size = 11000) : order_pool(pool_size) {};
     void process_msg(const std::string_view& line);
-    void print_fstate() const;
     void cancel_order(Order* order);
     void create_order(Order* order);
+    void print_fstate(std::ostream& out) const;
+    void res_to_file(const std::string& filename) const;
 };
 
 
@@ -159,14 +178,13 @@ anything leftover of incoming is placed onto book, and any used-up resting order
   got rid of our memory pooling so deleting manually agaub - but its slightly cleaner
 
 */
-void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& pool) {
+void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& pool, std::stringstream& out_buffer) {
     std::map<int, uint32_t> execs;
 
     auto match_engine = [&](OrderQueue*& best_q) {
-
         while (incoming_o->quantity > 0 && best_q && best_q->head) { 
             Order* resting_ord = best_q->head; 
-            
+
             int trade_price = resting_ord->price;
             bool prices_cross = incoming_o->is_buy ? (incoming_o->price >= trade_price) : (incoming_o->price <= trade_price);
             if (!prices_cross) break;
@@ -178,9 +196,8 @@ void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& poo
                 //     resting_ord = rest_next; 
                 //     continue; 
                 // }
-
                 uint32_t traded_qty = std::min(incoming_o->quantity, resting_ord->quantity);
-                printf("E, Client %d, Token %u, %u, %d\n", resting_ord->client_id, resting_ord->token, traded_qty, resting_ord->price);
+                out_buffer << "E, Client " << resting_ord->client_id << ", Token " << resting_ord->token << ", " << traded_qty << ", " << resting_ord->price << "\n";
                 
                 execs[trade_price] += traded_qty; 
                 incoming_o->quantity -= traded_qty;
@@ -195,11 +212,13 @@ void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& poo
                 resting_ord = rest_next; 
             }
             
-            if (best_q->empty() || (incoming_o->quantity > 0 && resting_ord == nullptr)) {
+            if (best_q->empty()) {
                 if (incoming_o->is_buy) { 
-                    asks.erase(trade_price); 
+                    ask_levels.erase(trade_price);
+                    ask_prices.erase(trade_price);
                 } else { 
-                    bids.erase(trade_price);
+                    bid_levels.erase(trade_price);
+                    bid_prices.erase(trade_price);
                 }
             }
             
@@ -209,9 +228,7 @@ void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& poo
                 } else { 
                     update_best_bid();
                 }
-            } else {
-                break; 
-            }
+            } else break; //full fulfilled 
         }
     };
 
@@ -219,7 +236,7 @@ void OrderBook::match_process(Order* incoming_o, auto& token_map, OrderPool& poo
     else match_engine(best_bid_q);
     
     for (const auto& entry : execs) {
-        printf("E, Client %d, Token %u, %u, %d\n", incoming_o->client_id, incoming_o->token, entry.second, entry.first);
+        out_buffer << "E, Client " << incoming_o->client_id << ", Token " << incoming_o->token << ", " << entry.second << ", " << entry.first << "\n";
     }
     
     if (incoming_o->quantity > 0) {
@@ -239,10 +256,12 @@ void OrderBook::cancel(Order* order){
 
     if (q->empty()){
         if (order->is_buy){
-            bids.erase(order->price);
+            bid_levels.erase(order->price);
+            bid_prices.erase(order->price);
             update_best_bid();
         } else {
-            asks.erase(order->price);
+            ask_levels.erase(order->price);
+            ask_prices.erase(order->price);
             update_best_ask();
         }
     }
@@ -263,7 +282,7 @@ void simulator::process_msg(const std::string_view& line) {
     if (tokens[0] == "O") {
         Order* order = order_pool.allocate();
         if (!order) {
-            printf("order pool exhausted\n");
+            std::cerr << "order pool exhausted\n";
             return;
         }
         order->client_id = parse_int(tokens[1]);
@@ -292,7 +311,7 @@ void simulator::cancel_order(Order* order) {
     auto book_it = all_books.find(order->book_id);
     if (book_it == all_books.end()) return;
     
-    printf("C, Client %d, Token %u\n", order->client_id, order->token);
+    out_buffer<<"C, Client "<<order->client_id<< ", Token "<<order->token<<"\n";
 
     OrderBook& book = book_it->second;
     book.cancel(order);
@@ -310,29 +329,44 @@ void simulator::create_order(Order* order) {
         order_pool.deallocate(order);
         return;
     }
-    printf("A, Client %d, Token %u\n", order->client_id, order->token);
+    out_buffer<< "A, Client " << order->client_id <<", Token " << order->token<<"\n";
     
     token_to_order[order->token] = order;
-    all_books[order->book_id].match_process(order, token_to_order, order_pool);
+    all_books[order->book_id].match_process(order, token_to_order, order_pool, out_buffer);
 }
 
 
-void simulator::print_fstate() const{
-    printf("\n");
+void simulator::print_fstate(std::ostream& out) const {
+    out << "\n";
     for (const auto& [book_id, book] : all_books) {
-        for (const auto& [price, queue] : book.get_bids()) {
-            for (Order* o = queue.head; o != nullptr; o = o->next) {
-                printf("O, Client %d, Orderbook %d, Token %u, B, %u, %d\n", o->client_id, book_id, o->token, o->quantity, o->price);
+        for (int price : book.get_bid_prices()) {
+            if (OrderQueue* queue = book.get_bid_q(price)) {
+                for (Order* o = queue->head; o != nullptr; o = o->next) {
+                    out<<"O, Client "<<o->client_id<<", Orderbook "<<book_id<<", Token "<< o->token<<", B, " << o->quantity << ", " << o->price << "\n";
+                }
             }
         }
-        for (const auto& [price, queue] : book.get_asks()) {
-            for (Order* o = queue.head; o != nullptr; o = o->next) {
-                printf("O, Client %d, Orderbook %d, Token %u, S, %u, %d\n", o->client_id, book_id, o->token, o->quantity, o->price);
+        for (int price : book.get_ask_prices()) {
+            if (OrderQueue* queue = book.get_ask_q(price)) {
+                for (Order* o = queue->head; o != nullptr; o = o->next) {
+                    out << "O, Client "<<o->client_id<< ", Orderbook " << book_id << ", Token "<<o->token << ", S, " << o->quantity<< ", " << o->price << "\n";
+                }
             }
         }
     }
-
 }
+
+void simulator::res_to_file(const std::string& filename) const {
+    std::ofstream outfile(filename);
+    if (!outfile) {
+        std::cerr << "cant open output file "<<filename;
+        return;
+    }
+    
+    outfile << out_buffer.str();
+    print_fstate(outfile);
+}
+
 int main(int argc, char* argv[]) {
     std::string filename = argc > 1 ? argv[1] : "input_orders.txt";
     std::ifstream infile(filename);
@@ -347,7 +381,13 @@ int main(int argc, char* argv[]) {
     while (getline(infile, line)) {
         sim.process_msg(line);
     }
-    sim.print_fstate();
 
+    sim.res_to_file("mapLL_results.txt");
+
+    std::ifstream resultFile("mapLL_results.txt");
+        while (getline(resultFile, line)) {
+            std::cout << line << std::endl;
+        }
+        resultFile.close();
     return 0;
 }

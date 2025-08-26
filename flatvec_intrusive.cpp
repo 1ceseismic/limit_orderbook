@@ -27,7 +27,7 @@ std::string_view trim(std::string_view sv) {
 
 struct OrderQueue;
 /*
-doubly-linked order object can access its price level immediately; 
+doubly-linked order so can access its price level immediately; 
 we store both next and prev pointers (intrusive) to allow linking the 
 removed orders neighbours immediately in queues remove_order
 */
@@ -55,7 +55,7 @@ struct OrderPool{
         }
     }
 
-    Order* allocate(){   //we give the next available order object LIFO
+    Order* allocate(){   //we receive the next available order object via LIFO which leverages hot cache 
         if (free_list.empty()) return nullptr;
         uint32_t o_idx = free_list.back();
         free_list.pop_back();
@@ -127,6 +127,22 @@ struct OrderBook {
     //we perform linear scans which is only fine under non-sparse assumtpion, 
     //we could have a set to store iterator to next, but may as well use a self-balancing map, 
     //best option is bitmap
+
+    //the following function math I did not know, I had to look up; this is someone elses code
+    int find_next(const std::vector<uint64_t>& bits, int idx, int max_idx){
+        if (idx >= max_idx) return -1;
+        int word= idx >> 6; // division by 64  i.e 2^6
+
+        uint64_t mask = ~((1ull << (idx & 63)) - 1); //create mask to ignore all price levels *before idx in this word
+        uint64_t val = bits[word] & mask;
+        while(true){
+            if(val) return (word << 6) + __builtin_ctzll(val);  //return absolute index of set bit we found
+            if(++word > ( max_idx >> 6)) break; //if not, we move to the next 64bit word and check again
+            val = bits[word];
+        }
+        return -1;
+    }
+
     int find_prev(const std::vector<uint64_t>& bits, int idx){
         if (idx < 0) return -1;
         int word= idx >> 6;
@@ -140,18 +156,6 @@ struct OrderBook {
         return -1;
     }
 
-    int find_next(const std::vector<uint64_t>& bits, int idx, int max_idx){
-        if (idx >= max_idx) return -1;
-        int word= idx >> 6;
-        uint64_t mask = ~((1ull << (idx & 63)) - 1);
-        uint64_t val = bits[word] & mask;
-        while(true){
-            if(val) return (word << 6) + __builtin_ctzll(val); 
-            if(++word > ( max_idx >> 6)) break;
-            val = bits[word];
-        }
-        return -1;
-    }
 
     void add_to_book(Order* o) {   
         if (o->is_buy) {
@@ -186,7 +190,7 @@ struct OrderBook {
     }
 
     /*
-    matching and executing logic ; we traverse all price levels;
+    matching and executing logic ; we traverse all price levels
     while order isnt fulfilled we go through each next sorted queue of orders, trying to fulfill it
     anything leftover of incoming is placed onto book, and any used-up resting orders will be removed from book + cleaned up
     */
@@ -226,7 +230,6 @@ struct OrderBook {
                 o_rest = o_rest_next; 
             }
             
-
             if (cur_lvl.empty()) {
                 clear_Bit(is_buy ? ask_bits : bid_bits, best_pr);
             }
@@ -234,7 +237,7 @@ struct OrderBook {
             if (o_inc->quantity > 0) { 
                 if (is_buy) {  ///find next best ask
                     best_pr = find_next(ask_bits, best_pr + 1, MAX_PRICE - 1);
-                } else { ///find next best bid
+                } else { //find next best bid
                     best_pr = find_prev(bid_bits, best_pr - 1);
                 }
             } else break; 

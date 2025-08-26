@@ -9,10 +9,10 @@
 #include <chrono>
 #include <random>
 #include <cassert>
-#include <algorithm> // For std::min
-#include <memory>    // For std::unique_ptr
-#include <list>      // For std::list based order book variant
-#include <type_traits> // For std::is_same
+#include <algorithm> 
+#include <memory>    
+#include <list>      
+#include <type_traits> 
 
 #if defined(_WIN32)
   #define NOMINMAX
@@ -24,10 +24,6 @@
   #include <sys/types.h>
   #include <sys/stat.h>
 #endif
-
-// ============================================================================
-// GLOBAL UTILITIES
-// ============================================================================
 
 int parse_int(const std::string_view& sv) {
     int val = 0;
@@ -68,15 +64,11 @@ uint64_t get_rss_bytes() {
 #endif
 }
 
-// ============================================================================
-// CORE DATA STRUCTURES: ORDER, ORDER QUEUES, ALLOCATORS
-// ============================================================================
 
-// Forward declaration for OrderQueue variants
-struct IntrusiveOrderQueue; // Custom intrusive linked list
-struct StdListOrderQueue;   // std::list based price level
 
-// Unified Order struct
+struct IntrusiveOrderQueue; 
+struct StdListOrderQueue;  
+
 struct Order {
     int client_id = 0;
     int book_id = 0;
@@ -84,21 +76,19 @@ struct Order {
     bool is_buy = false;
     uint32_t quantity = 0;
     int price = 0;
-    // For intrusive lists
+
     Order* next = nullptr;
     Order* prev = nullptr;
     IntrusiveOrderQueue* plvl_q_intrusive = nullptr;
     // For std::list based price levels
-    std::list<Order*>::iterator q_pos_stdlist; // iterator within the std::list for O(1) removal
+    std::list<Order*>::iterator q_pos_stdlist;
     StdListOrderQueue* plvl_q_stdlist = nullptr;
 
-    // Default constructor/destructor/assignment needed for pools/arenas
     Order() = default;
     ~Order() = default;
     Order(const Order&) = default;
     Order& operator=(const Order&) = default;
 
-    // Reset for pooling/arena reuse (only clear necessary fields)
     void reset() {
         client_id = 0;
         book_id = 0;
@@ -110,11 +100,9 @@ struct Order {
         prev = nullptr;
         plvl_q_intrusive = nullptr;
         plvl_q_stdlist = nullptr;
-        // q_pos_stdlist is managed by StdListOrderQueue, no need to reset here
     }
 };
 
-// Intrusive Linked List (used by OrderPool and BumpAllocator variants)
 struct IntrusiveOrderQueue {
     Order* head = nullptr;
     Order* tail = nullptr;
@@ -133,30 +121,30 @@ struct IntrusiveOrderQueue {
         o->plvl_q_intrusive = this;
     }
 
-    void remove_order(Order* o) { // O(1) for K orders in queue as we have prev pointer
+    void remove_order(Order* o) { 
         if (o->prev) o->prev->next = o->next;
         else head = o->next;
 
         if (o->next) o->next->prev = o->prev;
         else tail = o->prev;
 
-        o->plvl_q_intrusive = nullptr; // Clear reference to this queue
+        o->plvl_q_intrusive = nullptr;
     }
 };
 
-// PriceLevel using std::list (used by MapStdListOrderBook)
+
 struct StdListOrderQueue {
     std::list<Order*> orders;
 
     void add_order(Order* order){
         orders.push_back(order);
-        order->q_pos_stdlist = std::prev(orders.end()); // Store iterator for O(1) removal
+        order->q_pos_stdlist = std::prev(orders.end()); 
         order->plvl_q_stdlist = this;
     }
 
     void remove_order(Order* order) {
         orders.erase(order->q_pos_stdlist);
-        order->plvl_q_stdlist = nullptr; // Clear reference
+        order->plvl_q_stdlist = nullptr;
     }
 
     bool empty() const { return orders.empty(); }
@@ -164,13 +152,13 @@ struct StdListOrderQueue {
 
     void pop_front() {
          if (!orders.empty()) {
-            orders.front()->plvl_q_stdlist = nullptr; // Clear reference
+            orders.front()->plvl_q_stdlist = nullptr; 
             orders.pop_front();
         }
     }
 };
 
-// Base allocator interface
+
 class IAllocator {
 public:
     virtual ~IAllocator() = default;
@@ -749,6 +737,136 @@ public:
     }
 };
 
+// 4. Flat Vector with Linear Scan for Best Price (Ablation of Bitmap)
+class FlatVectorLinearScanOrderBook : public IOrderBook {
+    static constexpr int MAX_PRICE = 100000;
+    std::vector<IntrusiveOrderQueue> bids_levels;
+    std::vector<IntrusiveOrderQueue> asks_levels;
+    int best_bid_pr = -1;
+    int best_ask_pr = -1;
+
+    // No bitsets here, explicit linear scans for best prices
+
+    // Helper to find the next best bid price (linear scan downwards)
+    int find_best_bid_linear(int start_price) {
+        for (int p = start_price; p >= 0; --p) {
+            if (!bids_levels[p].empty()) {
+                return p;
+            }
+        }
+        return -1;
+    }
+
+    // Helper to find the next best ask price (linear scan upwards)
+    int find_best_ask_linear(int start_price) {
+        for (int p = start_price; p < MAX_PRICE; ++p) {
+            if (!asks_levels[p].empty()) {
+                return p;
+            }
+        }
+        return -1;
+    }
+
+public:
+    FlatVectorLinearScanOrderBook() :
+        bids_levels(MAX_PRICE), asks_levels(MAX_PRICE) {}
+
+    void add_to_book(Order* o_inc, std::unordered_map<uint32_t, Order*>& token_map, IAllocator& pool) override {
+        bool is_buy = o_inc->is_buy;
+
+        while (o_inc->quantity > 0) {
+            int& best_pr = is_buy ? best_ask_pr : best_bid_pr;
+            bool prices_cross = is_buy ? (o_inc->price >= best_pr) : (o_inc->price <= best_pr);
+
+            if (!prices_cross || best_pr == -1) break;
+
+            IntrusiveOrderQueue& cur_lvl = is_buy ? asks_levels[best_pr] : bids_levels[best_pr];
+            Order* o_rest = cur_lvl.head;
+
+            while (o_rest && o_inc->quantity > 0) {
+                Order* o_rest_next = o_rest->next;
+
+                if (o_rest->client_id == o_inc->client_id) { // Skip self trade
+                    o_rest = o_rest_next;
+                    continue;
+                }
+
+                uint32_t traded_qty = std::min(o_inc->quantity, o_rest->quantity);
+
+                o_inc->quantity -= traded_qty;
+                o_rest->quantity -= traded_qty;
+
+                if (o_rest->quantity == 0) {
+                    cur_lvl.remove_order(o_rest);
+                    token_map.erase(o_rest->token);
+                    pool.deallocate(o_rest);
+                }
+                o_rest = o_rest_next;
+            }
+
+            if (cur_lvl.empty()) { // If price level becomes empty
+                // No bitset to clear; best_pr updated below
+            }
+
+            if (o_inc->quantity > 0) { // Incoming order not fully filled, find next best price
+                if (is_buy) { // Find next best ask
+                    best_pr = find_best_ask_linear(best_pr + 1);
+                } else { // Find next best bid
+                    best_pr = find_best_bid_linear(best_pr - 1);
+                }
+            } else break; // Incoming order fully fulfilled
+        }
+
+        if (o_inc->quantity > 0) { // Add remaining of incoming order to book
+            if (is_buy) {
+                bids_levels[o_inc->price].push_back(o_inc);
+                if (o_inc->price > best_bid_pr) {
+                    best_bid_pr = o_inc->price;
+                }
+            } else {
+                asks_levels[o_inc->price].push_back(o_inc);
+                if (best_ask_pr == -1 || o_inc->price < best_ask_pr) {
+                    best_ask_pr = o_inc->price;
+                }
+            }
+        } else { // fully fulfilled
+            token_map.erase(o_inc->token);
+            pool.deallocate(o_inc);
+        }
+    }
+
+    void cancel_order(Order* order, std::unordered_map<uint32_t, Order*>& token_map, IAllocator& pool) override {
+        if (!order || !order->plvl_q_intrusive) return;
+
+        IntrusiveOrderQueue* q = order->plvl_q_intrusive;
+        if (!q) return;
+        q->remove_order(order);
+
+        if (q->empty()) { // If price level becomes empty
+            // No bitset to clear
+            if (order->is_buy && (order->price == best_bid_pr)) {
+                best_bid_pr = find_best_bid_linear(best_bid_pr - 1);
+            } else if (order->price == best_ask_pr) {
+                best_ask_pr = find_best_ask_linear(best_ask_pr + 1);
+            }
+        }
+        token_map.erase(order->token);
+        pool.deallocate(order);
+    }
+
+    void print_final_state() const override {
+        // No printing for benchmark for performance measurement
+    }
+
+    void reset_book() override {
+        for (auto& q : bids_levels) { q.head = q.tail = nullptr; }
+        for (auto& q : asks_levels) { q.head = q.tail = nullptr; }
+        // No bitsets to clear
+        best_bid_pr = -1;
+        best_ask_pr = -1;
+    }
+};
+
 
 // ============================================================================
 // BENCHMARK SIMULATORS (combining Allocator and OrderBook)
@@ -918,8 +1036,12 @@ using Simulator_FlatVecBitmap_BumpArena    = GenericSimulator<BumpAllocator, Fla
 // but included for completeness in testing all combinations.
 using Simulator_FlatVecBitmap_StdNewDelete = GenericSimulator<StandardAllocator, FlatVectorBitmapOrderBook>;
 
+// 3. Flat Vector with Linear Scan Order Book (FlatVectorLinearScanOrderBook) - for ablation study
+using Simulator_FlatVecLinearScan_OrderPool    = GenericSimulator<OrderPoolAllocator, FlatVectorLinearScanOrderBook>;
+using Simulator_FlatVecLinearScan_BumpArena    = GenericSimulator<BumpAllocator, FlatVectorLinearScanOrderBook>;
+using Simulator_FlatVecLinearScan_StdNewDelete = GenericSimulator<StandardAllocator, FlatVectorLinearScanOrderBook>;
 
-// 3. Map-based Std::List Order Book (MapStdListOrderBook)
+// 4. Map-based Std::List Order Book (MapStdListOrderBook)
 // This implementation uses std::list<Order*> which naturally pairs with new/delete for Order objects.
 // Pairing with pooling/bump allocators would require careful management of `Order*` lifetimes
 // within `std::list` and ensuring `std::list` doesn't make copies that break allocator assumptions.
@@ -946,6 +1068,11 @@ void run_benchmark_suite(const std::vector<std::string>& filenames) {
     simulators.push_back(std::make_unique<Simulator_FlatVecBitmap_OrderPool>(default_pool_arena_size));
     simulators.push_back(std::make_unique<Simulator_FlatVecBitmap_BumpArena>(default_pool_arena_size));
     simulators.push_back(std::make_unique<Simulator_FlatVecBitmap_StdNewDelete>(0)); // Pool size not used by StdNewDelete
+
+    // Add the new linear scan flat vector implementations
+    simulators.push_back(std::make_unique<Simulator_FlatVecLinearScan_OrderPool>(default_pool_arena_size));
+    simulators.push_back(std::make_unique<Simulator_FlatVecLinearScan_BumpArena>(default_pool_arena_size));
+    simulators.push_back(std::make_unique<Simulator_FlatVecLinearScan_StdNewDelete>(0)); // Pool size not used by StdNewDelete
 
     simulators.push_back(std::make_unique<Simulator_MapStdList_StdNewDelete>(0)); // Pool size not used by StdNewDelete
 
