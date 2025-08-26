@@ -102,14 +102,22 @@ struct OrderQueue {
 
 struct OrderBook {
 
-    static constexpr int MAX_PRICE = 100000;
+    static constexpr int MAX_PRICE = 10000;
     std::vector<OrderQueue> bids;
     std::vector<OrderQueue> asks;
+    std::vector<uint64_t> bid_bits;
+    std::vector<uint64_t> ask_bits;
+
     int best_bid_pr = -1;
     int best_ask_pr = -1;
     
-    std::vector<uint64_t> bid_bits;
-    std::vector<uint64_t> ask_bits;
+    OrderBook() : bids(MAX_PRICE), asks(MAX_PRICE), bid_bits((MAX_PRICE + 63) / 64, 0), ask_bits((MAX_PRICE + 63) / 64, 0) {}
+
+    void cancel(Order*);
+    void match_process(Order*, OrderPool&, auto& token_map);
+    int find_next(const std::vector<uint64_t>&, int, int);
+    int find_prev(const std::vector<uint64_t>&, int);
+
 
     inline void set_bit(std::vector<uint64_t>&bits, int idx){
         bits[idx >> 6] |= (1ull << (idx & 63));
@@ -120,42 +128,6 @@ struct OrderBook {
     inline bool test_bit(const std::vector<uint64_t>&bits, int idx){
         return bits[idx >> 6] & (1ull << (idx & 63));
     }
-
-
-    OrderBook() : bids(MAX_PRICE), asks(MAX_PRICE), bid_bits((MAX_PRICE + 63) / 64, 0), ask_bits((MAX_PRICE + 63) / 64, 0) {}
-
-    //we perform linear scans which is only fine under non-sparse assumtpion, 
-    //we could have a set to store iterator to next, but may as well use a self-balancing map, 
-    //best option is bitmap
-
-    //the following function math I did not know, I had to look up; this is someone elses code
-    int find_next(const std::vector<uint64_t>& bits, int idx, int max_idx){
-        if (idx >= max_idx) return -1;
-        int word= idx >> 6; // division by 64  i.e 2^6
-
-        uint64_t mask = ~((1ull << (idx & 63)) - 1); //create mask to ignore all price levels *before idx in this word
-        uint64_t val = bits[word] & mask;
-        while(true){
-            if(val) return (word << 6) + __builtin_ctzll(val);  //return absolute index of set bit we found
-            if(++word > ( max_idx >> 6)) break; //if not, we move to the next 64bit word and check again
-            val = bits[word];
-        }
-        return -1;
-    }
-
-    int find_prev(const std::vector<uint64_t>& bits, int idx){
-        if (idx < 0) return -1;
-        int word= idx >> 6;
-        uint64_t mask = ((1ull << ((idx & 63) + 1)) - 1);
-        uint64_t val = bits[word] & mask;
-        while(true){
-            if(val) return (word << 6) + (63 - __builtin_clzll(val));
-            if(--word < 0) break;
-            val = bits[word];
-        }
-        return -1;
-    }
-
 
     void add_to_book(Order* o) {   
         if (o->is_buy) {
@@ -172,120 +144,127 @@ struct OrderBook {
             }
         }
     }
-
-    void cancel(Order* order) {
-        if (!order || !order->plvl_q) return;
-        OrderQueue* q = order->plvl_q;
-
-        q->remove_order(order);
-
-        if (q->empty()) {
-            clear_Bit(order->is_buy ? bid_bits : ask_bits, order->price);
-            if (order->is_buy && (order->price == best_bid_pr)) {
-                    best_bid_pr = find_prev(bid_bits, best_bid_pr - 1); 
-            } else if (order->price == best_ask_pr) {
-                    best_ask_pr = find_next(ask_bits, best_ask_pr + 1, MAX_PRICE - 1);
-            }
-        }
-    }
-
-    /*
-    matching and executing logic ; we traverse all price levels
-    while order isnt fulfilled we go through each next sorted queue of orders, trying to fulfill it
-    anything leftover of incoming is placed onto book, and any used-up resting orders will be removed from book + cleaned up
-    */
-    void match_process(Order* o_inc, OrderPool& pool, auto& token_map) {
-        std::map<int, uint32_t> execs;
-        bool is_buy = o_inc->is_buy;
-        
-        while (o_inc->quantity > 0 ) {
-            int& best_pr = is_buy ? best_ask_pr : best_bid_pr;
-            bool prices_cross = is_buy ? (o_inc->price >= best_pr) : (o_inc->price <= best_pr);
-            if (!prices_cross || best_pr == -1) break;
-
-            OrderQueue& cur_lvl = is_buy ? asks[best_pr] : bids[best_pr];
-            Order* o_rest = cur_lvl.head;
-
-            while (o_rest && o_inc->quantity > 0) {
-                Order* o_rest_next = o_rest->next; 
-
-                // if (o_rest->client_id == o_inc->client_id) { //self trade
-                //     o_rest = o_rest_next; 
-                //     continue; 
-                // }
-          
-                uint32_t traded_qty = std::min(o_inc->quantity, o_rest->quantity);
-                printf("E, Client %d, Token %u, %u, %d\n", o_rest->client_id, o_rest->token, traded_qty, best_pr);
-                
-                execs[best_pr] += traded_qty; 
-                o_inc->quantity -= traded_qty;
-                o_rest->quantity -= traded_qty;
-
-                if (o_rest->quantity == 0) {
-                    cur_lvl.remove_order(o_rest); 
-                    token_map.erase(o_rest->token);
-                    pool.deallocate(o_rest);
-                }
-
-                o_rest = o_rest_next; 
-            }
-            
-            if (cur_lvl.empty()) {
-                clear_Bit(is_buy ? ask_bits : bid_bits, best_pr);
-            }
-
-            if (o_inc->quantity > 0) { 
-                if (is_buy) {  ///find next best ask
-                    best_pr = find_next(ask_bits, best_pr + 1, MAX_PRICE - 1);
-                } else { //find next best bid
-                    best_pr = find_prev(bid_bits, best_pr - 1);
-                }
-            } else break; 
-            
-        }
-
-        for (const auto& e : execs) {
-            printf("E, Client %d, Token %u, %u, %d\n", o_inc->client_id, o_inc->token, e.second, e.first);
-        }
-
-        if (o_inc->quantity > 0) {
-            add_to_book(o_inc);
-        } else {
-            token_map.erase(o_inc->token);
-            pool.deallocate(o_inc);
-        }
-    }
-
-
-    void print_state() const {
-        if (best_ask_pr != -1) {
-            for (int i = best_ask_pr; i < MAX_PRICE; ++i) {
-                if (!asks[i].empty()) {
-                    for (Order* o = asks[i].head; o != nullptr; o = o->next) {
-                        printf("O, Client %d, Orderbook %d, Token %u, S, %u, %d\n", o->client_id, o->book_id, o->token, o->quantity, o->price);
-                    }
-                }
-            }
-        }
-        if (best_bid_pr != -1) {
-            for (int i = best_bid_pr; i >= 0; --i) {
-                if (!bids[i].empty()) {
-                    for (Order* o = bids[i].head; o != nullptr; o = o->next) {
-                        printf("O, Client %d, Orderbook %d, Token %u, B, %u, %d\n", o->client_id, o->book_id, o->token, o->quantity, o->price);
-                    }
-                }
-            }
-        }
-    }
-
 };
+
+//we perform linear scans which is only fine under non-sparse assumtpion, 
+//we could have a set to store iterator to next, but may as well use a self-balancing map, 
+//best option is bitmap
+
+//the following function math I did not know, I had to look up; this is someone elses code
+int OrderBook::find_next(const std::vector<uint64_t>& bits, int idx, int max_idx){
+    if (idx >= max_idx) return -1;
+    int word= idx >> 6; // division by 64  i.e 2^6
+
+    uint64_t mask = ~((1ull << (idx & 63)) - 1); //create mask to ignore all price levels *before idx in this word
+    uint64_t val = bits[word] & mask;
+    while(true){
+        if(val) return (word << 6) + __builtin_ctzll(val);  //return absolute index of set bit we found
+        if(++word > ( max_idx >> 6)) break; //if not, we move to the next 64bit word and check again
+        val = bits[word];
+    }
+    return -1;
+}
+
+int OrderBook::find_prev(const std::vector<uint64_t>& bits, int idx){
+    if (idx < 0) return -1;
+    int word= idx >> 6;
+    uint64_t mask = ((1ull << ((idx & 63) + 1)) - 1);
+    uint64_t val = bits[word] & mask;
+    while(true){
+        if(val) return (word << 6) + (63 - __builtin_clzll(val));
+        if(--word < 0) break;
+        val = bits[word];
+    }
+    return -1;
+}
+/*
+matching and executing logic ; we traverse all price levels
+while order isnt fulfilled we go through each next sorted queue of orders, trying to fulfill it
+anything leftover of incoming is placed onto book, and any used-up resting orders will be removed from book + cleaned up
+*/
+void OrderBook::match_process(Order* o_inc, OrderPool& pool, auto& token_map) {
+    std::map<int, uint32_t> execs;
+    bool is_buy = o_inc->is_buy;
+    
+    while (o_inc->quantity > 0 ) {
+        int& best_pr = is_buy ? best_ask_pr : best_bid_pr;
+        bool prices_cross = is_buy ? (o_inc->price >= best_pr) : (o_inc->price <= best_pr);
+        if (!prices_cross || best_pr == -1) break;
+
+        OrderQueue& cur_lvl = is_buy ? asks[best_pr] : bids[best_pr];
+        Order* o_rest = cur_lvl.head;
+
+        while (o_rest && o_inc->quantity > 0) {
+            Order* o_rest_next = o_rest->next; 
+
+            // if (o_rest->client_id == o_inc->client_id) { //self trade
+            //     o_rest = o_rest_next; 
+            //     continue; 
+            // }
+      
+            uint32_t traded_qty = std::min(o_inc->quantity, o_rest->quantity);
+            printf("E, Client %d, Token %u, %u, %d\n", o_rest->client_id, o_rest->token, traded_qty, best_pr);
+            
+            execs[best_pr] += traded_qty; 
+            o_inc->quantity -= traded_qty;
+            o_rest->quantity -= traded_qty;
+
+            if (o_rest->quantity == 0) {
+                cur_lvl.remove_order(o_rest); 
+                token_map.erase(o_rest->token);
+                pool.deallocate(o_rest);
+            }
+
+            o_rest = o_rest_next; 
+        }
+        
+        if (cur_lvl.empty()) {
+            clear_Bit(is_buy ? ask_bits : bid_bits, best_pr);
+        }
+
+        if (o_inc->quantity > 0) { 
+            if (is_buy) {  ///find next best ask
+                best_pr = find_next(ask_bits, best_pr + 1, MAX_PRICE - 1);
+            } else { //find next best bid
+                best_pr = find_prev(bid_bits, best_pr - 1);
+            }
+        } else break; 
+        
+    }
+
+    for (const auto& e : execs) {
+        printf("E, Client %d, Token %u, %u, %d\n", o_inc->client_id, o_inc->token, e.second, e.first);
+    }
+
+    if (o_inc->quantity > 0) {
+        add_to_book(o_inc);
+    } else {
+        token_map.erase(o_inc->token);
+        pool.deallocate(o_inc);
+    }
+}
+
+void OrderBook::cancel(Order* order) {
+    if (!order || !order->plvl_q) return;
+    OrderQueue* q = order->plvl_q;
+    q->remove_order(order);
+
+    if (q->empty()) {
+        clear_Bit(order->is_buy ? bid_bits : ask_bits, order->price);
+        if (order->is_buy && (order->price == best_bid_pr)) {
+                best_bid_pr = find_prev(bid_bits, best_bid_pr - 1); 
+        } else if (order->price == best_ask_pr) {
+                best_ask_pr = find_next(ask_bits, best_ask_pr + 1, MAX_PRICE - 1);
+        }
+    }
+}
 
 struct simulator{
     OrderPool order_pool;
     std::unordered_map<uint32_t, Order*> token_to_order;
     std::map<int, OrderBook> all_books;
 
-    simulator(size_t pool_size = 2000) : order_pool(pool_size) {};
+    simulator(size_t pool_size = 11000) : order_pool(pool_size) {};
 
     void create_order(Order* order);
     void cancel_order(uint32_t token);
@@ -332,8 +311,7 @@ void simulator::process_message(const std::string_view& line) {
     if (line.empty()) return;
 
     std::vector<std::string_view> tokens;
-    size_t start = 0;
-    size_t end = 0;
+    size_t start = 0, end = 0;
     while ((end = line.find(',', start)) != std::string::npos) {
         tokens.push_back(trim({&line[start], end - start}));
         start = end + 1;
@@ -365,8 +343,17 @@ void simulator::process_message(const std::string_view& line) {
 
 void simulator::print_fstate() const{
     printf("\n");
-    for (const auto& book_p : all_books){
-        book_p.second.print_state();
+    for (const auto& [book_id, book] : all_books){
+        for (const auto& queue : book.bids){
+            for (Order* o = queue.head; o!=nullptr; o=o->next){
+                printf("O, Client %d, Orderbook %d, Token %u, B, %u, %d\n", o->client_id, book_id, o->token, o->quantity, o->price);
+            }
+        }
+        for (const auto& queue : book.asks){
+            for (Order* o = queue.head; o!=nullptr; o=o->next){
+                printf("O, Client %d, Orderbook %d, Token %u, S, %u, %d\n", o->client_id, book_id, o->token, o->quantity, o->price);
+            }
+        }
     }
 }
 
@@ -382,10 +369,8 @@ int main(int argc, char* argv[]) {
 
     std::string line;
     while (getline(infile, line)) {
-        if (line.empty()) continue;
         sim.process_message(line);
     }
-
     sim.print_fstate();
 
     return 0;
