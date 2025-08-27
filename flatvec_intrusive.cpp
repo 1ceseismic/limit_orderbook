@@ -43,11 +43,11 @@ struct Order {
     OrderQueue* plvl_q = nullptr;
 };
 
-struct OrderPool{
+struct PoolAlloc{
     std::vector<Order> mem_block;
     std::vector<uint32_t> free_list;
 
-    OrderPool(size_t size) {
+    PoolAlloc(size_t size) {
         mem_block.resize(size);
         free_list.reserve(size);
         for (uint32_t i =0; i<size; ++i){
@@ -114,7 +114,7 @@ struct OrderBook {
     OrderBook() : bids(MAX_PRICE), asks(MAX_PRICE), bid_bits((MAX_PRICE + 63) / 64, 0), ask_bits((MAX_PRICE + 63) / 64, 0) {}
 
     void cancel(Order*);
-    void match_process(Order*, OrderPool&, auto& token_map);
+    void match_process(Order*, PoolAlloc&, auto& token_map);
     int find_next(const std::vector<uint64_t>&, int, int);
     int find_prev(const std::vector<uint64_t>&, int);
 
@@ -182,7 +182,7 @@ matching and executing logic ; we traverse all price levels
 while order isnt fulfilled we go through each next sorted queue of orders, trying to fulfill it
 anything leftover of incoming is placed onto book, and any used-up resting orders will be removed from book + cleaned up
 */
-void OrderBook::match_process(Order* o_inc, OrderPool& pool, auto& token_map) {
+void OrderBook::match_process(Order* o_inc, PoolAlloc& pool, auto& token_map) {
     std::map<int, uint32_t> execs;
     bool is_buy = o_inc->is_buy;
     
@@ -260,7 +260,7 @@ void OrderBook::cancel(Order* order) {
 }
 
 struct simulator{
-    OrderPool order_pool;
+    PoolAlloc order_pool;
     std::unordered_map<uint32_t, Order*> token_to_order;
     std::map<int, OrderBook> all_books;
 

@@ -42,11 +42,11 @@ struct Order {
 };
 
 
-struct OrderPool{
+struct PoolAlloc{
     std::vector<Order> mem_block;
     std::vector<uint32_t> free_list;
 
-    OrderPool(size_t size) {
+    PoolAlloc(size_t size) {
         mem_block.resize(size);
         free_list.reserve(size);
         for (uint32_t i =0; i<size; ++i){
@@ -100,11 +100,11 @@ struct OrderQueue {
 orderbook struct for holding heads for O(1) retrieving est bid & offer
 if lookup miss , we find where to insert new price level per order type
 */
-struct PoolAlloc {
+struct OrderBook {
 
     std::map<int, OrderQueue, std::greater<int>> bids;
     std::map<int, OrderQueue> asks;
-    void match_process (Order*, auto&, OrderPool&);
+    void match_process (Order*, auto&, PoolAlloc&);
     void cancel (Order* o_to_cancel);
     OrderQueue* best_bid_q = nullptr;
     OrderQueue* best_ask_q = nullptr;
@@ -129,8 +129,8 @@ struct PoolAlloc {
 
 class simulator {
     std::unordered_map<uint32_t, Order*> token_to_order;
-    OrderPool order_pool;
-    std::map<int, PoolAlloc> all_books;
+    PoolAlloc order_pool;
+    std::map<int, OrderBook> all_books;
 
 public:
     simulator( size_t pool_size = 11000) : order_pool(pool_size) {};
@@ -148,7 +148,7 @@ anything leftover of incoming is placed onto book, and any used-up resting order
   got rid of our memory pooling so deleting manually agaub - but its slightly cleaner
 
 */
-void PoolAlloc::match_process(Order* inc_o, auto& token_map, OrderPool& pool) {
+void OrderBook::match_process(Order* inc_o, auto& token_map, PoolAlloc& pool) {
     std::map<int, uint32_t> execs;
 
     auto match_engine = [&](OrderQueue*& best_q) {
@@ -218,7 +218,7 @@ void PoolAlloc::match_process(Order* inc_o, auto& token_map, OrderPool& pool) {
     }
 }
 
-void PoolAlloc::cancel(Order* order){
+void OrderBook::cancel(Order* order){
     if (!order || !order->plvl_q)  return;
     OrderQueue* q = order->plvl_q;
     
@@ -261,7 +261,7 @@ void simulator::cancel_order(Order* order) {
     
     printf("C, Client %d, Token %u\n", order->client_id, order->token);
 
-    PoolAlloc& book = book_it->second;
+    OrderBook& book = book_it->second;
     book.cancel(order);
     token_to_order.erase(order->token);
     order_pool.deallocate(order);
