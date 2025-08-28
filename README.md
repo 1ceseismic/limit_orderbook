@@ -1,4 +1,33 @@
+# limit_orderbook
+
+Three C++ implementations of a limit order book matching engine, plus a benchmark
+suite that runs all of them over the same workloads and compares throughput and memory.
+
 [some slides I made to detail things](https://docs.google.com/presentation/d/1cTItXUDj4uLFCZI2_ZeLM9N24XDMve74x1uy0T8qtGk/edit?usp=sharing)
+
+## Build and run
+
+```sh
+g++ -O2 -std=c++20 flatvec_intrusive.cpp -o flatvec
+./flatvec data/input_orders.txt
+```
+
+The large workloads the suite expects are generated,
+since messages make up a few hundred MB. recreate them via:
+
+```sh
+python tools/gen_workload.py -n 10000  -o data/work_10k.txt
+python tools/gen_workload.py -n 1000000 -o data/work_1m.txt
+python tools/gen_workload.py -n 1000000 -x 0.5 -o data/work_high-churn.txt
+```
+
+Then:
+
+```sh
+g++ -O2 -std=c++20 benchmark_suite.cpp -o bench && ./bench
+```
+
+## Design
 
 simulator's core is OrderBook , the orderbook contains the two sides of bids and asks
 

@@ -116,6 +116,8 @@ struct OrderBook {
         best_ask_q = asks.empty() ? nullptr : &asks.begin()->second;
     }
 
+    void match_open(auto&, PoolAlloc&);
+
     void add_to_book(Order* o){
         if (o->is_buy){
             bids[o->price].push_back(o);
@@ -134,12 +136,63 @@ class simulator {
 
 public:
     simulator( size_t pool_size = 11000) : order_pool(pool_size) {};
-    void process_msg(const std::string_view& line);
+    void process_msg(const std::string_view& line, bool open);
     void print_fstate() const;
     void cancel_order(Order* order);
-    void create_order(Order* order);
+    void create_order(Order* order, bool open);
+    void open_state();
 };
 
+
+void simulator::open_state(){
+    for (auto& [id, book] : all_books){
+        book.match_open(token_to_order, order_pool);
+    }
+}
+
+void OrderBook::match_open(auto& token_map, PoolAlloc& pool) {
+    while (best_bid_q && best_ask_q && best_bid_q->head->price >= best_ask_q->head->price) {
+        
+        OrderQueue* resting_q = best_ask_q; 
+        int agg_price = best_bid_q->head->price;
+        int trade_price = resting_q->head->price;
+
+        Order* aggressive_o = best_bid_q->head; 
+        while (aggressive_o && resting_q->head) {
+            Order* resting_o = resting_q->head;
+            
+            uint32_t traded_qty = std::min(aggressive_o->quantity, resting_o->quantity);
+            printf("E, Client %d, Token %u, %u, ??\n", aggressive_o->client_id, aggressive_o->token, traded_qty);
+            printf("E, Client %d, Token %u, %u, ??\n", resting_o->client_id, resting_o->token, traded_qty);
+
+            aggressive_o->quantity -= traded_qty;
+            resting_o->quantity -= traded_qty;
+
+            if (resting_o->quantity == 0) {
+                resting_q->remove_order(resting_o);
+                token_map.erase(resting_o->token);
+                pool.deallocate(resting_o);
+            }
+
+            if (aggressive_o->quantity == 0) {
+                Order* next_aggressive = aggressive_o->next;
+                best_bid_q->remove_order(aggressive_o);
+                token_map.erase(aggressive_o->token);
+                pool.deallocate(aggressive_o);
+                aggressive_o = next_aggressive;
+            }
+        }
+
+        if (best_bid_q->empty()) {
+             bids.erase(agg_price);
+             update_best_bid();
+        }
+        if (resting_q->empty()) {
+            asks.erase(trade_price);
+            update_best_ask();
+        }
+    }
+}
 
 /*
 matching and executing logic ; we traverse all price levels (the ladder);
@@ -162,11 +215,6 @@ void OrderBook::match_process(Order* inc_o, auto& token_map, PoolAlloc& pool) {
 
             while (resting_ord && inc_o->quantity > 0) { // actually traverse the level
                 Order* rest_next = resting_ord->next;
-
-                // if (inc_o->client_id == resting_ord->client_id){ 
-                //     resting_ord = rest_next; 
-                //     continue; 
-                // }
 
                 uint32_t traded_qty = std::min(inc_o->quantity, resting_ord->quantity);
                 printf("E, Client %d, Token %u, %u, %d\n", resting_ord->client_id, resting_ord->token, traded_qty, resting_ord->price);
@@ -236,20 +284,22 @@ void OrderBook::cancel(Order* order){
 }
 
 
-void simulator::create_order(Order* order) {
-    if (order->price < 0) { 
-        order_pool.deallocate(order);
-        return; 
-    }
-    if (token_to_order.count(order->token)) { //duplicate
+void simulator::create_order(Order* order, bool open) {
+    if (order->price < 0 || token_to_order.count(order->token)) {
         order_pool.deallocate(order);
         return;
     }
-    printf("A, Client %d, Token %u\n", order->client_id, order->token);
-    
     token_to_order[order->token] = order;
-    all_books[order->book_id].match_process(order, token_to_order, order_pool);
+    
+    if (open){
+        all_books[order->book_id].add_to_book(order);
+    } else {
+        printf("A, Client %d, Token %u\n", order->client_id, order->token);
+        all_books[order->book_id].match_process(order, token_to_order, order_pool);
+    }
 }
+
+
 
 
 void simulator::cancel_order(Order* order) {
@@ -268,7 +318,7 @@ void simulator::cancel_order(Order* order) {
 }
 
 
-void simulator::process_msg(const std::string_view& line) {
+void simulator::process_msg(const std::string_view& line, bool open) {
     if (line.empty()) return;
 
     std::vector<std::string_view> tokens;
@@ -293,9 +343,9 @@ void simulator::process_msg(const std::string_view& line) {
         order->quantity = parse_int(tokens[5]);
         order->price = parse_int(tokens[6]);
 
-        create_order(order);
+        create_order(order, open);
 
-    } else if (tokens[0] == "X") {
+    } else if (tokens[0] == "X" && !open) {
         uint32_t token_to_cancel = parse_int(tokens[2]);
         auto it = token_to_order.find(token_to_cancel);
         if (it != token_to_order.end()) {
@@ -305,6 +355,7 @@ void simulator::process_msg(const std::string_view& line) {
 }
 
 void simulator::print_fstate() const{
+
     printf("\n");
     for (const auto& [book_id, book] : all_books) {
         for (const auto& [price, queue] : book.bids) {
@@ -321,7 +372,7 @@ void simulator::print_fstate() const{
 
 }
 int main(int argc, char* argv[]) {
-    std::string filename = argc > 1 ? argv[1] : "input_orders.txt";
+    std::string filename = argc > 1 ? argv[1] : "data/input_orders.txt";
     std::ifstream infile(filename);
     if (!infile) {
         std::cerr << "cant open file\n";
@@ -332,8 +383,10 @@ int main(int argc, char* argv[]) {
 
     std::string line;
     while (getline(infile, line)) {
-        sim.process_msg(line);
+        sim.process_msg(line, true);
     }
+
+    sim.open_state();
     sim.print_fstate();
 
     return 0;

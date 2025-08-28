@@ -197,7 +197,7 @@ void match_order(Order* inc_order) {
 };
 
 int main(int argc, char* argv[]) {
-    std::string filename = argc > 1 ? argv[1] : "input_orders.txt";
+    std::string filename = argc > 1 ? argv[1] : "data/input_orders.txt";
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cerr << "file error\n";

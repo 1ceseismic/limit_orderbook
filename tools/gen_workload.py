@@ -47,8 +47,11 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--price-base", type=int, default=1000, help="The base price around which orders are generated.")
     parser.add_argument("-v", "--price-volatility", type=int, default=50, help="The range (+/-) of price variation from the base.")
     parser.add_argument("-o", "--output-file", type=str, default="workload.txt", help="The name of the output file.")
+    parser.add_argument("-s", "--seed", type=int, default=None, help="rng seed")
     
     args = parser.parse_args()
+
+    random.seed(args.seed)
     
     generate_workload(args.num_orders, args.num_clients, args.num_books, 
                       args.cancel_ratio, args.price_base, args.price_volatility, 

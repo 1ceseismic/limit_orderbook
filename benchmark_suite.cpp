@@ -1105,13 +1105,12 @@ void run_benchmark_suite(const std::vector<std::string>& filenames) {
 
 
 int main() {
-    // Collect all workload files available in the project
     std::vector<std::string> workload_files = {
-        "input_orders.txt",
-        "work_1k.txt",
-        "work_10k.txt",
-        "work_1m.txt",
-        "work_high-churn.txt"
+        "data/input_orders.txt",
+        "data/work_1k.txt",
+        "data/work_10k.txt",
+        "data/work_1m.txt",
+        "data/work_high-churn.txt"
     };
 
     run_benchmark_suite(workload_files);

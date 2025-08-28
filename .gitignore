@@ -1,10 +1,19 @@
+# editor / IDE
 /.vscode
-.editorconfig
 /.vs
+.editorconfig
 CppProperties.json
+
+# build artifacts
+*.exe
+*.o
+
+# program output
 flatvec_output.txt
 mapll_output.txt
 sim_output.txt
-flatvec.exe
-mapLL.exe
-stdlist.exe
+
+# generated workloads (regenerate with tools/gen_workload.py)
+/data/*.txt
+!/data/input_orders.txt
+!/data/work_1k.txt

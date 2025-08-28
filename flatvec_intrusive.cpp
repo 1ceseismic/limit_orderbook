@@ -360,7 +360,7 @@ void simulator::print_fstate() const{
 
 int main(int argc, char* argv[]) {
     simulator sim;
-    std::string filename = argc > 1 ? argv[1] : "input_orders.txt";
+    std::string filename = argc > 1 ? argv[1] : "data/input_orders.txt";
     std::ifstream infile(filename);
     if (!infile) {
         std::cerr << "cant open file\n";
